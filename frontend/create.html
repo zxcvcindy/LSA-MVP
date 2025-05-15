@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>建立虛擬資源</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 30px;
+            background: #f8f8f8;
+        }
+
+        form {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 420px;
+            margin: auto;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-top: 12px;
+        }
+
+        input,
+        select,
+        button {
+            width: 100%;
+            padding: 8px;
+            margin-top: 6px;
+        }
+
+        button {
+            background: #4c74af;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #4c74af;
+        }
+
+        /* 狀態與 SSH 區塊 */
+        #status,
+        #ssh-info {
+            max-width: 420px;
+            margin: 20px auto;
+            padding: 15px;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+            word-break: break-all;
+        }
+
+        #status.loading {
+            border-left: 6px solid #f39c12;
+        }
+
+        #status.success {
+            border-left: 6px solid #4CAF50;
+        }
+
+        #status.error {
+            border-left: 6px solid #e74c3c;
+            color: #e74c3c;
+        }
+
+        #ssh-info {
+            border-left: 6px solid #2d8cf0;
+            display: none;
+        }
+
+        code {
+            background: #eee;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+
+<body>
+    <form id="createForm">
+        <h2>建立 VM 或 Container</h2>
+
+        <label for="type">選擇資源類型：</label>
+        <select name="type" id="type" required>
+            <option value="vm">虛擬機 (VM)</option>
+            <option value="container">容器 (Container)</option>
+        </select>
+
+        <label for="name">名稱：</label>
+        <input type="text" id="name" name="name" required />
+
+        <button type="submit">建立</button>
+    </form>
+</body>
+
+</html>

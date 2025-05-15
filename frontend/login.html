@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Lab Platform</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 font-sans">
+
+  <!-- Login Section -->
+  <div id="login-section" class="flex h-screen justify-center items-center">
+    <div class="bg-white p-8 rounded-lg shadow-md w-96">
+      <h1 class="text-2xl font-bold mb-6 text-center">Login</h1>
+      <form>
+        <label class="block mb-2 text-sm">Email</label>
+        <input type="email" placeholder="user@example.com" class="w-full border px-3 py-2 mb-4 rounded" />
+        <label class="block mb-2 text-sm">Password</label>
+        <input type="password" placeholder="********" class="w-full border px-3 py-2 mb-6 rounded" />
+        <button type="button" onclick="switchToDashboard()"
+          class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Login</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Dashboard Section -->
+  <div id="dashboard-section" class="hidden min-h-screen p-8">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-2xl font-bold">My Labs</h2>
+      <button onclick="switchToLogin()" class="bg-gray-300 px-4 py-2 rounded">Log out</button>
+    </div>
+
+    <button onclick="createLab()" class="mb-6 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">Create
+      Lab</button>
+
+    <div id="lab-card" class="bg-white p-6 rounded-lg shadow-md w-full max-w-xl">
+      <h3 class="text-lg font-semibold mb-2">🧪 Lab #1</h3>
+      <p class="text-green-600 font-medium mb-2">🟢 Creating...</p>
+      <p class="mb-4 text-sm">ssh <span id="ssh-user">user@b.example.com</span></p>
+      <div class="flex items-center gap-3">
+        <button onclick="copySSH()" class="bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 text-sm">Copy SSH
+          command</button>
+        <button class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">Delete Lab</button>
+      </div>
+    </div>
+
+    <p id="copied-toast" class="hidden mt-4 text-sm text-green-600">Command copied to clipboard!</p>
+  </div>
+
+  <script>
+    function switchToDashboard() {
+      document.getElementById("login-section").classList.add("hidden");
+      document.getElementById("dashboard-section").classList.remove("hidden");
+    }
+    function switchToLogin() {
+      document.getElementById("login-section").classList.remove("hidden");
+      document.getElementById("dashboard-section").classList.add("hidden");
+    }
+    function copySSH() {
+      navigator.clipboard.writeText("ssh user@b.example.com");
+      const toast = document.getElementById("copied-toast");
+      toast.classList.remove("hidden");
+      setTimeout(() => toast.classList.add("hidden"), 2000);
+    }
+    function createLab() {
+      alert("Lab created (mock action)");
+    }
+  </script>
+
+</body>
+
+</html>

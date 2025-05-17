@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VM / Container 管理介面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 30px;
+            background-color: #f8f8f8;
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        table {
+            width: 90%;
+            margin: auto;
+            border-collapse: collapse;
+            background-color: #fff;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+        }
+
+        th,
+        td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: center;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        button {
+            padding: 6px 10px;
+            margin: 2px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .start {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .stop {
+            background-color: #f39c12;
+            color: white;
+        }
+
+        .delete {
+            background-color: #e74c3c;
+            color: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h2>目前資源管理</h2>
+
+    <table id="resourceTable">
+        <thead>
+            <tr>
+                <th>名稱</th>
+                <th>類型</th>
+                <th>狀態</th>
+                <th>IP位址</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- 資源列動態產生 -->
+        </tbody>
+    </table>
+
+    <script>
+        // 假設從後端 API 拿到的資料如下
+        const resources = [
+            { name: "vm01", type: "VM", status: "running", ip: "192.168.1.10" },
+            { name: "ct01", type: "Container", status: "stopped", ip: "192.168.1.20" },
+        ];
+
+        const tbody = document.querySelector("#resourceTable tbody");
+
+        resources.forEach(r => {
+            const row = document.createElement("tr");
+
+            row.innerHTML = `
+        <td>${r.name}</td>
+        <td>${r.type}</td>
+        <td>${r.status}</td>
+        <td>${r.ip}</td>
+        <td>
+            <button class="start" onclick="control('${r.name}', 'start')">啟動</button>
+            <button class="stop" onclick="control('${r.name}', 'stop')">關機</button>
+            <button class="stop" onclick="control('${r.name}', 'stop')">重新啟動</button>
+            <button class="delete" onclick="control('${r.name}', 'delete')">刪除</button>
+        </td>`;
+
+            tbody.appendChild(row);
+        });
+
+        function control(name, action) {
+            fetch(`/control`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, action })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    alert(`操作成功：${name} → ${action}`);
+                    location.reload();
+                })
+                .catch(err => {
+                    alert("操作失敗！");
+                    console.error(err);
+                });
+        }
+    </script>
+
+</body>
+
+</html>

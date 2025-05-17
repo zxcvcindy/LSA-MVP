@@ -32,17 +32,18 @@ def close_db(e=None):
 
 def validate_login(username, password): #驗證用戶名和密碼是否正確
     db, cursor = get_db() # 獲取數據庫連接和游標。
-    cursor.execute("SELECT * FROM users WHERE username = %s AND password = %s", (username, password))
+    cursor.execute("SELECT * FROM users WHERE id = %s AND password = %s", (username, password))
     user = cursor.fetchone()
-    return user
+    return get_user(username)
 
 def get_user(user_id): #根據用戶 ID 獲取用戶信息
     db, cursor = get_db()
-    cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+    cursor.execute("SELECT id, name, email FROM users WHERE id = %s", (user_id,))
     user = cursor.fetchone()
     return user
 
-def register_user(username, password): #註冊新用戶
+def register_user(username, password, name, email): #註冊新用戶
     db, cursor = get_db()
-    cursor.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, password))
+    cursor.execute("INSERT INTO users (id, password, name, email) VALUES (%s, %s, %s, %s)", (username, password, name, email))
     db.commit()
+    return get_user(username)

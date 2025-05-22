@@ -3,6 +3,10 @@ from flask import Flask, render_template, redirect, url_for, request, session, f
 from functools import wraps
 import os, proxmox_api
 from dbUtils import get_db, close_db, validate_login, get_user, register_user
+from flask_jwt_extended import create_access_token
+from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import jwt_required
+from flask_jwt_extended import JWTManager
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
@@ -13,7 +17,10 @@ app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = 'root'
 app.config['MYSQL_DB'] = 'mvp'
 app.config['MYSQL_PORT'] = 8889
-
+app.config["JWT_SECRET_KEY"] = "secret"
+app.secret_key = "replace-with-strong-secret"
+app.config["JWT_SECRET_KEY"] = "replace-with-jwt-secret"
+jwt = JWTManager(app) 
 # 設置日誌
 logging.basicConfig(level=logging.DEBUG)
 
@@ -50,10 +57,10 @@ def login():
     password = body['password']
     username = body['username'] 
     user = validate_login(username, password) # db裡，驗證用戶名和密碼
-    if user: # user['id'] 的值存儲在 session 對象中，名為 'user_id'。 之後就可以通過 session['user_id'] 來獲取當前登入用戶的 ID。
-        session['user_id'] = user['id']
-        flash('Login successful!', 'success')
-        return  user
+    if user:
+        access_token = create_access_token(identity=str(user['id']))  # ✅ 傳 string
+        return jsonify(access_token=access_token)
+        
 
 @app.route('/logout')
 def logout():
@@ -75,20 +82,26 @@ def start_vm(node, vmid):
 def stop_vm(node, vmid):
     return jsonify(proxmox_api.stop_vm(node, vmid))
 
-@app.route('/vm/<node>/create', methods=['POST'])
-def create_vm(node):
+@app.route('/user-vm/create', methods=['POST'])
+@jwt_required()
+def create_user_vm_api():
+    user_id = get_jwt_identity()  # 這裡會拿到登入者的 ID
+    
     data = request.get_json()
-    vmid = data.get("vmid")
-    name = data.get("name")
-    cores = data.get("cores", 1)
-    memory = data.get("memory", 512)
-    storage = data.get("storage", "local-lvm")
-    iso = data.get("iso")  # 範例：local:iso/debian-12.iso
+    new_vmid = data["vmid"]
+    vm_name = f"vm-{user_id}"
+    password = data.get("password", "1234")
 
-    if not all([vmid, name, iso]):
-        return jsonify({"error": "vmid, name, and iso are required."}), 400
+    result = proxmox_api.create_user_vm(
+        node="pve",
+        template_vmid=110,
+        new_vmid=new_vmid,
+        vm_name=vm_name,
+        username=user_id,
+        password=password
+    )
+    return jsonify(result)
 
-    return jsonify(proxmox_api.create_vm(node, vmid, name, cores, memory, storage, iso))
 
 @app.route('/vm/<node>/<int:vmid>', methods=['DELETE'])
 def delete_vm(node, vmid):

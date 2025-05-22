@@ -30,11 +30,14 @@ def close_db(e=None):
     if db is not None:
         db.close()
 
-def validate_login(username, password): #驗證用戶名和密碼是否正確
-    db, cursor = get_db() # 獲取數據庫連接和游標。
+def validate_login(username, password):
+    db, cursor = get_db()
     cursor.execute("SELECT * FROM users WHERE id = %s AND password = %s", (username, password))
     user = cursor.fetchone()
-    return get_user(username)
+    if user:
+        return get_user(username)
+    return None
+
 
 def get_user(user_id): #根據用戶 ID 獲取用戶信息
     db, cursor = get_db()

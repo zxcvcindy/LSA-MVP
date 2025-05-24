@@ -1,121 +1,166 @@
 import logging
-from flask import Flask, render_template, redirect, url_for, request, session, flash, jsonify
-from functools import wraps
-import os, proxmox_api
-from dbUtils import get_db, close_db, validate_login, get_user, register_user
-from flask_jwt_extended import create_access_token
-from flask_jwt_extended import get_jwt_identity
-from flask_jwt_extended import jwt_required
-from flask_jwt_extended import JWTManager
+import os
+
+from flask import Flask, request, jsonify, flash
+import proxmox_api
+from dbUtils import close_db, validate_login, register_user
+from flask_jwt_extended import (
+    JWTManager, create_access_token,
+    get_jwt_identity, jwt_required
+)
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)
 
-# 設置數據庫配置
+# ---------------------------------------------------------------------------
+# Configuration
+# ---------------------------------------------------------------------------
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "replace-with-strong-secret")
+app.config["JWT_SECRET_KEY"] = os.environ.get("JWT_SECRET_KEY", "replace-with-jwt-secret")
+
+# MySQL settings
 app.config['MYSQL_HOST'] = 'localhost'
 app.config['MYSQL_USER'] = 'root'
 app.config['MYSQL_PASSWORD'] = 'root'
 app.config['MYSQL_DB'] = 'mvp'
 app.config['MYSQL_PORT'] = 8889
-app.config["JWT_SECRET_KEY"] = "secret"
-app.secret_key = "replace-with-strong-secret"
-app.config["JWT_SECRET_KEY"] = "replace-with-jwt-secret"
-jwt = JWTManager(app) 
-# 設置日誌
+
+jwt = JWTManager(app)
+
+# Logging
 logging.basicConfig(level=logging.DEBUG)
 
+
+# ---------------------------------------------------------------------------
+# App‑context teardown
+# ---------------------------------------------------------------------------
 @app.teardown_appcontext
 def teardown_db(exception):
     close_db()
 
-def login_required(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        if 'user_id' not in session:
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return wrapper
 
-@app.route('/register', methods=['GET', 'POST'])
+# ---------------------------------------------------------------------------
+# Authentication
+# ---------------------------------------------------------------------------
+@app.route('/register', methods=['POST'])
 def register():
-    app.logger.debug('Register route called') #在日誌中記錄(會出現在終端機，讓你檢查的)
-    app.logger.debug('Register form submitted')
-    body = request.get_json()
-    username = body['username'] # 從提交的表單中獲取用戶名和密碼
-    password = body['password'] 
-    name = body['name'] 
-    email = body['email'] 
-    user = register_user(username, password, name, email) # db裡，處理用戶註冊
-    flash('Registration successful!', 'success')
-    return user
+    app.logger.debug('Register route called')
+    body = request.get_json() or {}
 
-@app.route('/login', methods=['GET', 'POST'])
+    username = body.get('username')
+    password = body.get('password')
+    name     = body.get('name')
+    email    = body.get('email')
+
+    if not all([username, password, name, email]):
+        return jsonify(msg="Missing fields"), 400
+
+    user = register_user(username, password, name, email)
+    flash('Registration successful!', 'success')  # flash 仍可用，但不再依賴 auth session
+    return jsonify(user), 201
+
+
+@app.route('/login', methods=['POST'])
 def login():
     app.logger.debug('Login route called')
-    app.logger.debug('Login form submitted')
-    body = request.get_json()
-    password = body['password']
-    username = body['username'] 
-    user = validate_login(username, password) # db裡，驗證用戶名和密碼
-    if user:
-        access_token = create_access_token(identity=str(user['id']))  # ✅ 傳 string
-        return jsonify(access_token=access_token)
-        
+    body = request.get_json() or {}
 
-@app.route('/logout')
+    username = body.get('username')
+    password = body.get('password')
+
+    if not username or not password:
+        return jsonify(msg="Missing username or password"), 400
+
+    user = validate_login(username, password)
+    if not user:
+        return jsonify(msg="Invalid credentials"), 401
+
+    access_token = create_access_token(identity=str(user['id']))
+    return jsonify(access_token=access_token)
+
+
+@app.route('/logout', methods=['POST'])
+@jwt_required()
 def logout():
-    session.pop('user_id', None)
-    flash('You have been logged out.', 'info')
-    return redirect(url_for('login'))
+    """JWT 無伺服器狀態，前端自行丟棄 token 即登出。此端點可作為
+    revocation list 或 audit log 之用。"""
+    return jsonify(msg='Logout successful. Please discard the token on the client side.')
 
-#proxmox_api
 
+# ---------------------------------------------------------------------------
+# Proxmox API proxies (some already protected by JWT)
+# ---------------------------------------------------------------------------
 @app.route('/nodes', methods=['GET'])
+@jwt_required()
 def list_nodes():
     return jsonify(proxmox_api.get_nodes())
 
+
 @app.route('/vm/<node>/<int:vmid>/start', methods=['POST'])
+@jwt_required()
 def start_vm(node, vmid):
     return jsonify(proxmox_api.start_vm(node, vmid))
 
+
 @app.route('/vm/<node>/<int:vmid>/stop', methods=['POST'])
+@jwt_required()
 def stop_vm(node, vmid):
     return jsonify(proxmox_api.stop_vm(node, vmid))
+
 
 @app.route('/user-vm/create', methods=['POST'])
 @jwt_required()
 def create_user_vm_api():
-    user_id = get_jwt_identity()  # 這裡會拿到登入者的 ID
-    
+    user_id = get_jwt_identity()         # 目前登入者的帳號
     data = request.get_json()
-    new_vmid = data["vmid"]
-    vm_name = f"vm-{user_id}"
-    password = data.get("password", "1234")
 
+    new_vmid  = data["vmid"]
+    vm_name   = f"vm-{user_id}"
+    password  = data.get("password","1234")
+
+    # 1. 建 VM
     result = proxmox_api.create_user_vm(
         node="pve",
-        template_vmid=110,
+        template_vmid=100,
         new_vmid=new_vmid,
         vm_name=vm_name,
         username=user_id,
         password=password
     )
-    return jsonify(result)
 
+    # 2. 若成功，再取 IPv6 / SSH 並一起回傳
+    if result.get("ok"):
+        netinfo = proxmox_api.build_ssh6_cmd("pve", new_vmid, user_id)
+        return jsonify({**result, **netinfo}), 201
+
+    # 3. 失敗照原格式回傳
+    return jsonify(result), 500
+
+@app.route('/vm/<node>/<int:vmid>/ssh6', methods=['GET'])
+@jwt_required()
+def get_vm_ssh6(node, vmid):
+    username = get_jwt_identity()
+    return jsonify(proxmox_api.build_ssh6_cmd(node, vmid, username))
 
 @app.route('/vm/<node>/<int:vmid>', methods=['DELETE'])
+@jwt_required()
 def delete_vm(node, vmid):
     return jsonify(proxmox_api.delete_vm(node, vmid))
 
+
 @app.route('/vm/<node>/<int:vmid>/restart', methods=['POST'])
+@jwt_required()
 def restart_vm(node, vmid):
     return jsonify(proxmox_api.restart_vm(node, vmid))
 
 
 @app.route('/vm/<node>/<int:vmid>/status', methods=['GET'])
+@jwt_required()
 def get_vm_status(node, vmid):
     return jsonify(proxmox_api.get_vm_status(node, vmid))
 
 
+# ---------------------------------------------------------------------------
+# Entrypoint
+# ---------------------------------------------------------------------------
 if __name__ == '__main__':
     app.run(debug=True, port=5002)

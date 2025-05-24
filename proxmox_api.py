@@ -61,20 +61,38 @@ def wait_for_task(node: str, upid: str, timeout: int = 600) -> None:
         time.sleep(1)
 
 
-def get_vm_ip(node: str, vmid: int) -> str | None:
-    """透過 QEMU Guest Agent 取得 VM 的第一個 IPv4。"""
+def get_vm_ipv6(node: str, vmid: int) -> str | None:
+    """透過 QEMU Guest Agent 取得 VM 的第一個『全域 IPv6』。"""
     url = f"{BASE_URL}/nodes/{node}/qemu/{vmid}/agent/network-get-interfaces"
-    r = requests.get(url, headers=HEADERS, verify=VERIFY_SSL)
+    r   = requests.get(url, headers=HEADERS, verify=VERIFY_SSL)
     if r.status_code != 200:
         return None
-    for iface in r.json().get("data", []):
+
+    payload = r.json().get("data")            # 可能是 list 或 dict
+    # 若是 dict，介面清單會在 payload["result"]
+    if isinstance(payload, dict):
+        interfaces = payload.get("result", [])
+    else:
+        interfaces = payload or []
+
+    for iface in interfaces:
+        if not isinstance(iface, dict):
+            continue
         for ipd in iface.get("ip-addresses", []):
             ip = ipd.get("ip-address")
-            if ip and ":" not in ip and ip != "127.0.0.1":
+            if (
+                ip                                          # 有值
+                and ":" in ip                               # IPv6
+                and not ip.startswith("fe80")               # 非 link-local
+                and ip != "::1"                             # 非 loopback
+            ):
                 return ip
     return None
 
-# ───── 主要工作 ─────
+
+
+
+
 def create_user_vm(node: str,
                    template_vmid: int,
                    new_vmid: int,
@@ -83,15 +101,10 @@ def create_user_vm(node: str,
                    password: str,
                    use_dhcp: bool = True,
                    ip_cidr: str | None = None,
-                   gw_ip: str | None = None) -> dict:
-    """
-    從範本 Clone 一台 VM → 套 Cloud-Init → 開機 → 取 IP。
-    回傳 dict，內含 ssh 指令與錯誤訊息。
-    """
+                   gw_ip: str  | None = None) -> dict:
 
     try:
         # ① Clone
-        print(f"[1/4] Clone {template_vmid} → {new_vmid}")
         r = requests.post(f"{BASE_URL}/nodes/{node}/qemu/{template_vmid}/clone",
                           headers=HEADERS, verify=VERIFY_SSL, data={
                               "newid": new_vmid,
@@ -101,9 +114,8 @@ def create_user_vm(node: str,
         r.raise_for_status()
         wait_for_task(node, r.json()["data"])
 
-        # ② Cloud-Init 設定
-        print("[2/4] Apply Cloud-Init config")
-        ipconfig = "ip=dhcp" if use_dhcp else f"ip={ip_cidr},gw={gw_ip}"
+        # ② Cloud-Init config
+        ipconfig = "ip6=dhcp" if use_dhcp else f"ip6={ip_cidr},gw6={gw_ip}"
         r = requests.post(f"{BASE_URL}/nodes/{node}/qemu/{new_vmid}/config",
                           headers=HEADERS, verify=VERIFY_SSL, data={
                               "ciuser": username,
@@ -112,49 +124,49 @@ def create_user_vm(node: str,
                           })
         r.raise_for_status()
 
-        # ③ 開機
-        print("[3/4] Start VM")
+        # ③ Start VM
         r = requests.post(f"{BASE_URL}/nodes/{node}/qemu/{new_vmid}/status/start",
                           headers=HEADERS, verify=VERIFY_SSL)
         r.raise_for_status()
         wait_for_task(node, r.json()["data"])
 
-        # ④ 取 IP
-        print("[4/4] Query IP (guest-agent)")
-        ip_addr = get_vm_ip(node, new_vmid)
-        ssh_cmd = f"ssh {username}@{ip_addr}" if ip_addr else "IP N/A"
+        # ④ Get IPv6
+        ip_addr = None
+        for _ in range(15):          # 最長等 15×2=30 秒
+            ip_addr = get_vm_ipv6(node, new_vmid)
+            if ip_addr:
+                break
+            time.sleep(2)
+
+        ssh_cmd = f"ssh {username}@[{ip_addr}]" if ip_addr else "IPv6 N/A"
 
         return {
             "ok": True,
             "vmid": new_vmid,
-            "ip": ip_addr,
+            "ip6": ip_addr,
             "ssh": ssh_cmd,
             "username": username,
             "password": password
         }
 
-    # ─── 任何失敗都進這裡 ───
     except Exception as err:
-        print(f"Error: {err}")
         try:
             requests.delete(f"{BASE_URL}/nodes/{node}/qemu/{new_vmid}",
                             headers=HEADERS, verify=VERIFY_SSL).raise_for_status()
-            print("Rollback OK")
-        except Exception as rb_err:
-            print(f"Rollback failed: {rb_err}")
+        except Exception:
+            pass
         return {"ok": False, "error": str(err), "vmid": new_vmid}
-
 
 # ─────── 示範呼叫 ───────
 if __name__ == "__main__":
     result = create_user_vm(
-        node=NODE,
-        template_vmid=TEMPLATE_ID,
-        new_vmid=101,
-        vm_name="student101",
-        username="student",
-        password="password",
-        use_dhcp=True
+        node          = "pve",
+        template_vmid = 9000,
+        new_vmid      = 101,
+        vm_name       = "student101",
+        username      = "student",
+        password      = "password",
+        use_dhcp      = True          # 讓 cloud-init 用 DHCPv6
     )
     print(result)
 
@@ -188,4 +200,12 @@ def get_vm_status(node, vmid):
     response = requests.get(url, headers=HEADERS, verify=False)
     return response.json()
 
+
+def build_ssh6_cmd(node: str, vmid: int, username: str) -> dict:
+    """
+    回傳指定 VM 的 IPv6 與 SSH 指令（若抓不到 IPv6 會回傳 None）
+    """
+    ip6 = get_vm_ipv6(node, vmid)
+    ssh = f"ssh {username}@[{ip6}]" if ip6 else None
+    return {"ip6": ip6, "ssh": ssh}
 

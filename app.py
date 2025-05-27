@@ -8,6 +8,8 @@ from flask_jwt_extended import (
     JWTManager, create_access_token,
     get_jwt_identity, jwt_required
 )
+from flask_cors import CORS
+CORS(app, origins=['*'])  # 正式環境請改成你的前端網域
 
 app = Flask(__name__)
 

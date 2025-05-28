@@ -50,13 +50,12 @@ def register():
 
     username = body.get('username')
     password = body.get('password')
-    name     = body.get('name')
-    email    = body.get('email')
+    email    = f"s{username}@ncnu.edu.tw"
 
-    if not all([username, password, name, email]):
+    if not all([username, password, email]):
         return jsonify(msg="Missing fields"), 400
 
-    user = register_user(username, password, name, email)
+    user = register_user(username, password, email)
     flash('Registration successful!', 'success')  # flash 仍可用，但不再依賴 auth session
     return jsonify(user), 201
 

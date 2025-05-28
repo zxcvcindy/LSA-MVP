@@ -71,11 +71,11 @@
     <label for="userid">使用者 ID：</label>
     <input id="userid" name="username" required>
 
-    <label for="name">使用者名稱：</label>
+    <!-- <label for="name">使用者名稱：</label>
     <input id="name" name="name" required>
 
     <label for="email">電子郵件：</label>
-    <input id="email" type="email" name="email" required>
+    <input id="email" type="email" name="email" required> -->
 
     <label for="password">密碼：</label>
     <input id="password" type="password" name="password" minlength="6" required>
@@ -89,8 +89,8 @@
 
     <script>
         const userid = document.getElementById('userid');
-        const nameEl = document.getElementById('name');
-        const emailEl = document.getElementById('email');
+        // const nameEl = document.getElementById('name');
+        // const emailEl = document.getElementById('email');
         const pwd = document.getElementById('password');
         const confirm = document.getElementById('confirm');
         const pwdErr = document.getElementById('pwdErr');
@@ -104,8 +104,8 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     username: userid.value,
-                    name: nameEl.value,
-                    email: emailEl.value,
+                    // name: nameEl.value,
+                    // email: emailEl.value,
                     password: pwd.value
                 })
             });

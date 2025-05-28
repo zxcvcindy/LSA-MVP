@@ -95,8 +95,9 @@
         const email = document.getElementById('email');
         const pwd = document.getElementById('password');
 
+        const API_BASE = 'http://157.230.41.208:5002/api';
         async function register() {
-            const response = await fetch('/register', {
+            const response = await fetch('${API_BASE}/register', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'

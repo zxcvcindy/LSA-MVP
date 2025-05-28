@@ -47,6 +47,6 @@ def get_user(user_id): #根據用戶 ID 獲取用戶信息
 
 def register_user(username, password, email): #註冊新用戶
     db, cursor = get_db()
-    cursor.execute("INSERT INTO users (id, password, email) VALUES (%s, %s, %s, %s)", (username, password, email))
+    cursor.execute("INSERT INTO users (id, password, email) VALUES (%s, %s, %s)", (username, password, email))
     db.commit()
     return get_user(username)

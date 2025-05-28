@@ -66,28 +66,26 @@
 </head>
 
 <body>
-    <form id="registerForm">
-        <h2>使用者註冊</h2>
+    <h2>使用者註冊</h2>
 
-        <label for="userid">使用者 ID：</label>
-        <input id="userid" name="username" required>
+    <label for="userid">使用者 ID：</label>
+    <input id="userid" name="username" required>
 
-        <label for="name">使用者名稱：</label>
-        <input id="name" name="name" required>
+    <label for="name">使用者名稱：</label>
+    <input id="name" name="name" required>
 
-        <label for="email">電子郵件：</label>
-        <input id="email" type="email" name="email" required>
+    <label for="email">電子郵件：</label>
+    <input id="email" type="email" name="email" required>
 
-        <label for="password">密碼：</label>
-        <input id="password" type="password" name="password" minlength="6" required>
+    <label for="password">密碼：</label>
+    <input id="password" type="password" name="password" minlength="6" required>
 
-        <label for="confirm">確認密碼：</label>
-        <input id="confirm" type="password" name="confirm" minlength="6" required>
+    <label for="confirm">確認密碼：</label>
+    <input id="confirm" type="password" name="confirm" minlength="6" required>
 
-        <div id="pwdErr" class="error">兩次密碼不一致！</div>
+    <div id="pwdErr" class="error">兩次密碼不一致！</div>
 
-        <button onclick="register" type="button">註冊</button>
-    </form>
+    <button onclick="register()" type="button">註冊</button>
 
     <script>
         const userid = document.getElementById('userid');
@@ -100,7 +98,7 @@
         const API_BASE = 'http://157.230.41.208:5002';
 
         async function register() {
-            const res = await fetch('${API_BASE}/register', {
+            const res = await fetch(`${API_BASE}/register`, {
                 mode: "cors",
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

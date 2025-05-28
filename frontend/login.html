@@ -1,54 +1,128 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Student Lab Platform</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>使用者登入</title>
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f8f8f8;
+      padding: 30px;
+    }
+
+    .card {
+      background: #fff;
+      padding: 24px 32px;
+      max-width: 420px;
+      margin: auto;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, .08);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-top: 14px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 6px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 24px;
+      background: #2196f3;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    button:hover {
+      background: #1976d2;
+    }
+
+    .error {
+      color: #e74c3c;
+      margin-top: 8px;
+      font-size: .9rem;
+      display: none;
+    }
+  </style>
 </head>
 
-<body class="bg-gray-100 font-sans">
+<body>
+  <div class="card">
+    <h2>使用者登入</h2>
 
-  <!-- Login Section -->
-  <div id="login-section" class="flex h-screen justify-center items-center">
-    <div class="bg-white p-8 rounded-lg shadow-md w-96">
-      <h1 class="text-2xl font-bold mb-6 text-center">Login</h1>
-      <form>
-        <label class="block mb-2 text-sm">UserID</label>
-        <input type="userID" placeholder="studentID" class="w-full border px-3 py-2 mb-4 rounded" />
-        <label class="block mb-2 text-sm">Password</label>
-        <input type="password" placeholder="********" class="w-full border px-3 py-2 mb-6 rounded" />
-        <button type="button" onclick="switchToDashboard()"
-          class="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700">Login</button>
-      </form>
-    </div>
+    <label for="userid">使用者 ID：</label>
+    <input id="userid" name="username" required>
+
+    <label for="password">密碼：</label>
+    <input id="password" type="password" name="password" minlength="6" required>
+
+    <div id="loginErr" class="error">登入失敗，請再次確認！</div>
+
+    <button onclick="login()" type="button">登入</button>
   </div>
 
-  <!-- Dashboard Section -->
-  <div id="dashboard-section" class="hidden min-h-screen p-8">
-    <div class="flex justify-between items-center mb-6">
-      <h2 class="text-2xl font-bold">My Labs</h2>
-      <button onclick="switchToLogin()" class="bg-gray-300 px-4 py-2 rounded">Log out</button>
-    </div>
+  <script>
+    // 取得 DOM 元素
+    const userid = document.getElementById('userid');
+    const pwd = document.getElementById('password');
+    const loginErr = document.getElementById('loginErr');
 
-    <button onclick="createLab()" class="mb-6 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">Create
-      Lab</button>
+    // API base url
+    const API_BASE = 'http://157.230.41.208:5002';
 
-    <div id="lab-card" class="bg-white p-6 rounded-lg shadow-md w-full max-w-xl">
-      <h3 class="text-lg font-semibold mb-2">🧪 Lab #1</h3>
-      <p class="text-green-600 font-medium mb-2">🟢 Creating...</p>
-      <p class="mb-4 text-sm">ssh <span id="ssh-user">user@b.example.com</span></p>
-      <div class="flex items-center gap-3">
-        <button onclick="copySSH()" class="bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 text-sm">Copy SSH
-          command</button>
-        <button class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-sm">Delete Lab</button>
-      </div>
-    </div>
+    // 登入函式
+    async function login() {
+      // 清除錯誤訊息
+      loginErr.style.display = 'none';
 
-    <p id="copied-toast" class="hidden mt-4 text-sm text-green-600">Command copied to clipboard!</p>
-  </div>
-  <script src="main.js" defer></script>
+      // 送出登入請求
+      const res = await fetch(`${API_BASE}/login`, {
+        mode: 'cors',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: userid.value.trim(),
+          password: pwd.value
+        })
+      });
+
+      if (res.ok) {
+        // 若後端回傳 token，可存到 localStorage
+        const data = await res.json().catch(() => ({}));
+        console.log('登入成功，token:', data);
+        if (data["access_token"]) {
+          localStorage.setItem('token', data.token);
+        }
+        alert('登入成功！');
+        // 登入後導向使用者首頁或儀表板
+        location.href = '/management';
+      } else {
+        const data = await res.json().catch(() => ({}));
+        loginErr.textContent = '登入失敗：' + (data.msg || res.statusText);
+        loginErr.style.display = 'block';
+      }
+    }
+  </script>
+
 </body>
 
 </html>

@@ -7,9 +7,9 @@
     <title>VM / Container 管理介面</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             padding: 30px;
-            background-color: #f8f8f8;
+            background: #f8f8f8;
         }
 
         h2 {
@@ -59,6 +59,40 @@
             background-color: #e74c3c;
             color: white;
         }
+
+        /* 新增：Create 按鈕 */
+        .create {
+            background-color: #3498db;
+            color: #fff;
+            padding: 10px 16px;
+            margin-bottom: 16px;
+        }
+
+        /* 浮動重新整理按鈕 */
+        .refresh {
+            position: fixed;
+            right: 30px;
+            bottom: 30px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background: #4CAF50;
+            color: #fff;
+            font-size: 24px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .status-running {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .status-stopped {
+            color: #e74c3c;
+            font-weight: bold;
+        }
     </style>
 </head>
 
@@ -66,13 +100,18 @@
 
     <h2>目前資源管理</h2>
 
+    <!-- Create 按鈕放在表格上方右側 -->
+    <div style="width: 90%; margin: auto; text-align: right;">
+        <button class="create" onclick="window.location='/create'">＋ 建立新資源</button>
+    </div>
+
     <table id="resourceTable">
         <thead>
             <tr>
                 <th>名稱</th>
                 <th>類型</th>
                 <th>狀態</th>
-                <th>IP位址</th>
+                <th>IP 位址</th>
                 <th>操作</th>
             </tr>
         </thead>
@@ -81,49 +120,76 @@
         </tbody>
     </table>
 
+    <!-- 浮動重新整理 -->
+    <button class="refresh" onclick="loadResources()">⟳</button>
+
     <script>
-        // 假設從後端 API 拿到的資料如下
-        const resources = [
-            { name: "vm01", type: "VM", status: "running", ip: "192.168.1.10" },
-            { name: "ct01", type: "Container", status: "stopped", ip: "192.168.1.20" },
-        ];
-
-        const tbody = document.querySelector("#resourceTable tbody");
-
-        resources.forEach(r => {
-            const row = document.createElement("tr");
-
-            row.innerHTML = `
-        <td>${r.name}</td>
-        <td>${r.type}</td>
-        <td>${r.status}</td>
-        <td>${r.ip}</td>
-        <td>
-            <button class="start" onclick="control('${r.name}', 'start')">啟動</button>
-            <button class="stop" onclick="control('${r.name}', 'stop')">關機</button>
-            <button class="stop" onclick="control('${r.name}', 'stop')">重新啟動</button>
-            <button class="delete" onclick="control('${r.name}', 'delete')">刪除</button>
-        </td>`;
-
-            tbody.appendChild(row);
-        });
-
-        function control(name, action) {
-            fetch(`/control`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, action })
-            })
-                .then(res => res.json())
-                .then(data => {
-                    alert(`操作成功：${name} → ${action}`);
-                    location.reload();
-                })
-                .catch(err => {
-                    alert("操作失敗！");
-                    console.error(err);
-                });
+        const API_BASE = 'http://157.230.41.208:5002';
+        const token = localStorage.getItem('token');
+        if (!token) {
+            // 未登入者導回登入頁面
+            location.href = '/login';
         }
+
+        // 取得並渲染資源清單
+        async function loadResources() {
+            try {
+                const res = await fetch(`${API_BASE}/resources`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const list = await res.json();
+
+                const tbody = document.querySelector('#resourceTable tbody');
+                tbody.innerHTML = '';
+
+                list.forEach(r => {
+                    const row = document.createElement('tr');
+                    const statusClass = r.status === 'running' ? 'status-running' : 'status-stopped';
+                    row.innerHTML = `
+                <td>${r.name}</td>
+                <td>${r.type}</td>
+                <td class="${statusClass}">${r.status}</td>
+                <td>${r.ip || '-'}</td>
+                <td>
+                    <button class="start" ${r.status === 'running' ? 'disabled' : ''} onclick="control('${r.name}', 'start')">啟動</button>
+                    <button class="stop" ${r.status === 'stopped' ? 'disabled' : ''} onclick="control('${r.name}', 'stop')">關機</button>
+                    <button class="stop" onclick="control('${r.name}', 'restart')">重新啟動</button>
+                    <button class="delete" onclick="control('${r.name}', 'delete')">刪除</button>
+                </td>`;
+                    tbody.appendChild(row);
+                });
+            } catch (err) {
+                alert('取得資源失敗');
+                console.error(err);
+            }
+        }
+
+        // 操作資源
+        async function control(name, action) {
+            if (!confirm(`${name} → ${action}？`)) return;
+            try {
+                const res = await fetch(`${API_BASE}/control`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ name, action })
+                });
+                const data = await res.json();
+                if (res.ok && (data.ok || data.status === 'success')) {
+                    loadResources();
+                } else {
+                    alert('操作失敗：' + (data.msg || res.statusText));
+                }
+            } catch (err) {
+                alert('操作失敗！');
+                console.error(err);
+            }
+        }
+
+        // 首次載入
+        loadResources();
     </script>
 
 </body>

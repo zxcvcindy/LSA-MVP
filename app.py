@@ -113,6 +113,29 @@ def start_vm(node, vmid):
 def stop_vm(node, vmid):
     return jsonify(proxmox_api.stop_vm(node, vmid))
 
+@app.route('/user-vm', methods=['GET'])
+@jwt_required()
+def list_user_vm_api():
+    """回傳目前登入者的 VM 清單（含狀態與 IP）"""
+    user_id = get_jwt_identity()            # 取得 JWT 內的帳號資訊
+
+    try:
+        # 向 Proxmox 取資料（請依你的實際狀況更名）
+        vms = proxmox_api.list_user_vms(node="pve", username=user_id)
+
+        # 只傳前端需要的欄位，避免漏出敏感資訊
+        result = [{
+            "vmid":   vm["vmid"],
+            "name":   vm["name"],
+            "status": vm.get("status", "unknown"),
+            "ip":     vm.get("ip")          # 若無則前端顯示「-」
+        } for vm in vms]
+
+        return jsonify(result), 200
+
+    except Exception as e:
+        # 可視需求 Log 詳細錯誤
+        return jsonify({"msg": f"取得 VM 清單失敗: {e}"}), 500
 
 @app.route('/user-vm/create', methods=['POST'])
 @jwt_required()

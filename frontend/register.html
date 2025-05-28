@@ -7,9 +7,9 @@
     <title>使用者註冊</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            padding: 30px;
+            font-family: Arial, Helvetica, sans-serif;
             background: #f8f8f8;
+            padding: 30px
         }
 
         form {
@@ -18,17 +18,17 @@
             max-width: 420px;
             margin: auto;
             border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, .08);
+            box-shadow: 0 0 10px rgba(0, 0, 0, .08)
         }
 
         h2 {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 20px
         }
 
         label {
             display: block;
-            margin-top: 14px;
+            margin-top: 14px
         }
 
         input {
@@ -37,71 +37,89 @@
             margin-top: 6px;
             border: 1px solid #ccc;
             border-radius: 6px;
-            box-sizing: border-box;
+            box-sizing: border-box
         }
 
         button {
             width: 100%;
             padding: 12px;
             margin-top: 24px;
-            background: #4CAF50;
+            background: #4caf50;
             color: #fff;
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 1rem
         }
 
         button:hover {
-            background: #45a049;
+            background: #45a049
         }
 
         .error {
             color: #e74c3c;
             margin-top: 8px;
-            font-size: 0.9rem;
+            font-size: .9rem;
+            display: none
         }
     </style>
 </head>
 
 <body>
-    <form id="registerForm" action="/register" method="POST">
+    <form id="registerForm">
         <h2>使用者註冊</h2>
 
-        <label for="username">使用者ID：</label>
-        <input type="text" id="username" name="username" required />
+        <label for="userid">使用者 ID：</label>
+        <input id="userid" name="username" required>
 
-        <label for="username">使用者名稱：</label>
-        <input type="text" id="username" name="username" required />
+        <label for="name">使用者名稱：</label>
+        <input id="name" name="name" required>
 
         <label for="email">電子郵件：</label>
-        <input type="email" id="email" name="email" required />
+        <input id="email" type="email" name="email" required>
 
         <label for="password">密碼：</label>
-        <input type="password" id="password" name="password" minlength="6" required />
+        <input id="password" type="password" name="password" minlength="6" required>
 
         <label for="confirm">確認密碼：</label>
-        <input type="password" id="confirm" name="confirm" minlength="6" required />
-        <div id="pwdErr" class="error" style="display:none;">兩次密碼不一致！</div>
+        <input id="confirm" type="password" name="confirm" minlength="6" required>
+
+        <div id="pwdErr" class="error">兩次密碼不一致！</div>
 
         <button type="submit">註冊</button>
     </form>
 
     <script>
-        const form = document.getElementById('registerForm');
+        const id = document.getElementById('id');
+        const username = document.getElementById('username');
+        const email = document.getElementById('email');
         const pwd = document.getElementById('password');
-        const confirm = document.getElementById('confirm');
-        const errBox = document.getElementById('pwdErr');
 
-        form.addEventListener('submit', e => {
-            if (pwd.value !== confirm.value) {
-                e.preventDefault();               // 阻止送出
-                errBox.style.display = 'block';   // 顯示錯誤
+        async function register() {
+            const response = await fetch('/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    id: id.value,
+                    username: username.value,
+                    email: email.value,
+                    password: pwd.value
+                })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (data) {
+                    alert('註冊成功！');
+                    window.location.href = '/login';
+                } else {
+                    alert('註冊失敗：' + data.message);
+                }
+            } else {
+                alert('伺服器錯誤，請稍後再試。');
             }
-        });
-
-        // 使用者在修改密碼時即時隱藏錯誤提示
-        confirm.addEventListener('input', () => { errBox.style.display = 'none'; });
+        }
     </script>
 </body>
 

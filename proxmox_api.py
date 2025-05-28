@@ -49,7 +49,7 @@ def wait_for_task(node: str, upid: str, timeout: int = 600) -> None:
     start = time.time()
     while True:
         r = requests.get(f"{BASE_URL}/nodes/{node}/tasks/{upid}/status",
-                         headers=HEADERS, verify=VERIFY_SSL)
+                        headers=HEADERS, verify=VERIFY_SSL)
         r.raise_for_status()
         st = r.json()["data"]
         if st["status"] == "stopped":

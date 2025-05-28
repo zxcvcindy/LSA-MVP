@@ -91,10 +91,6 @@ def logout():
 # ---------------------------------------------------------------------------
 # Proxmox API proxies (some already protected by JWT)
 # ---------------------------------------------------------------------------
-@app.route('/nodes', methods=['GET'])
-@jwt_required()
-def list_nodes():
-    return jsonify(proxmox_api.get_nodes())
 
 
 @app.route('/vm/<node>/<int:vmid>/start', methods=['POST'])
@@ -146,8 +142,8 @@ def create_user_vm_api():
     result = proxmox_api.create_user_vm(
         node="pve",
         template_vmid=100,
-        new_vmid=new_vmid,
-        vm_name=vm_name,
+        # new_vmid=new_vmid,
+        # vm_name=vm_name,
         username=user_id,
         password=password
     )
@@ -187,7 +183,6 @@ def get_vm_status(node, vmid):
 @jwt_required()
 def list_nodes():
     return jsonify(proxmox_api.get_nodes())
-
 
 @app.route("/vms/<node>", methods=["GET"])
 @jwt_required()

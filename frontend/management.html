@@ -4,71 +4,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VM / Container 管理介面</title>
+    <title>VM 管理介面</title>
     <style>
         body {
             font-family: Arial, Helvetica, sans-serif;
             padding: 30px;
-            background: #f8f8f8;
+            background: #f8f8f8
         }
 
         h2 {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 20px
         }
 
         table {
-            width: 90%;
+            width: 60%;
+            min-width: 320px;
             margin: auto;
             border-collapse: collapse;
-            background-color: #fff;
-            box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+            background: #fff;
+            box-shadow: 0 0 8px rgba(0, 0, 0, .1)
         }
 
         th,
         td {
             padding: 12px;
             border: 1px solid #ddd;
-            text-align: center;
+            text-align: center
         }
 
         th {
-            background-color: #4CAF50;
-            color: white;
+            background: #4CAF50;
+            color: #fff
         }
 
-        button {
-            padding: 6px 10px;
-            margin: 2px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
+        .status-running {
+            color: #27ae60;
+            font-weight: bold
         }
 
-        .start {
-            background-color: #4CAF50;
-            color: white;
+        .status-stopped {
+            color: #e74c3c;
+            font-weight: bold
         }
 
-        .stop {
-            background-color: #f39c12;
-            color: white;
-        }
-
-        .delete {
-            background-color: #e74c3c;
-            color: white;
-        }
-
-        /* 新增：Create 按鈕 */
-        .create {
-            background-color: #3498db;
-            color: #fff;
-            padding: 10px 16px;
-            margin-bottom: 16px;
-        }
-
-        /* 浮動重新整理按鈕 */
         .refresh {
             position: fixed;
             right: 30px;
@@ -81,117 +60,84 @@
             font-size: 24px;
             border: none;
             cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, .3)
         }
 
-        .status-running {
-            color: #27ae60;
-            font-weight: bold;
-        }
-
-        .status-stopped {
-            color: #e74c3c;
-            font-weight: bold;
+        .create {
+            background: #3498db;
+            color: #fff;
+            padding: 10px 16px;
+            margin-bottom: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer
         }
     </style>
 </head>
 
 <body>
-
     <h2>目前資源管理</h2>
 
-    <!-- Create 按鈕放在表格上方右側 -->
-    <div style="width: 90%; margin: auto; text-align: right;">
+    <div style="width:60%;min-width:320px;margin:auto;text-align:right">
         <button class="create" onclick="window.location='/create'">＋ 建立新資源</button>
     </div>
 
     <table id="resourceTable">
         <thead>
             <tr>
-                <th>名稱</th>
-                <th>類型</th>
+                <th>VM 名稱</th>
                 <th>狀態</th>
-                <th>IP 位址</th>
-                <th>操作</th>
             </tr>
         </thead>
-        <tbody>
-            <!-- 資源列動態產生 -->
-        </tbody>
+        <tbody></tbody>
     </table>
 
-    <!-- 浮動重新整理 -->
-    <button class="refresh" onclick="loadResources()">⟳</button>
+    <button class="refresh" title="重新整理" onclick="loadResources()">⟳</button>
 
     <script>
         const API_BASE = 'http://157.230.41.208:5002';
         const token = localStorage.getItem('token');
-        if (!token) {
-            // 未登入者導回登入頁面
-            location.href = '/login';
-        }
+        if (!token) { location.href = '/login'; }
 
-        // 取得並渲染資源清單
+        const tbody = document.querySelector('#resourceTable tbody');
+
         async function loadResources() {
+            tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;">載入中...</td></tr>';
             try {
-                const res = await fetch(`${API_BASE}/resources`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                const res = await fetch(`${API_BASE}/myvms`, {
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
                 });
-                const list = await res.json();
-
-                const tbody = document.querySelector('#resourceTable tbody');
-                tbody.innerHTML = '';
-
-                list.forEach(r => {
-                    const row = document.createElement('tr');
-                    const statusClass = r.status === 'running' ? 'status-running' : 'status-stopped';
-                    row.innerHTML = `
-                <td>${r.name}</td>
-                <td>${r.type}</td>
-                <td class="${statusClass}">${r.status}</td>
-                <td>${r.ip || '-'}</td>
-                <td>
-                    <button class="start" ${r.status === 'running' ? 'disabled' : ''} onclick="control('${r.name}', 'start')">啟動</button>
-                    <button class="stop" ${r.status === 'stopped' ? 'disabled' : ''} onclick="control('${r.name}', 'stop')">關機</button>
-                    <button class="stop" onclick="control('${r.name}', 'restart')">重新啟動</button>
-                    <button class="delete" onclick="control('${r.name}', 'delete')">刪除</button>
-                </td>`;
-                    tbody.appendChild(row);
-                });
+                if (!res.ok) { throw new Error(res.statusText); }
+                const raw = await res.json();
+                const list = Array.isArray(raw) ? raw : (raw.data || []);
+                renderResources(list);
             } catch (err) {
-                alert('取得資源失敗');
+                tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;color:#e74c3c;">載入失敗：${err.message}</td></tr>`;
                 console.error(err);
             }
         }
 
-        // 操作資源
-        async function control(name, action) {
-            if (!confirm(`${name} → ${action}？`)) return;
-            try {
-                const res = await fetch(`${API_BASE}/control`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({ name, action })
-                });
-                const data = await res.json();
-                if (res.ok && (data.ok || data.status === 'success')) {
-                    loadResources();
-                } else {
-                    alert('操作失敗：' + (data.msg || res.statusText));
-                }
-            } catch (err) {
-                alert('操作失敗！');
-                console.error(err);
+        function renderResources(arr) {
+            if (arr.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;">目前無資源</td></tr>';
+                return;
             }
+            tbody.innerHTML = '';
+            arr.forEach(r => {
+                const vmName = r.vmname || r.name || r.vm_name || r.id || '-';
+                const statusRaw = r.STATUS || r.status || 'unknown';
+                const status = statusRaw.toString().toLowerCase();
+                const statusClass = status === 'running' ? 'status-running' : (status === 'stopped' ? 'status-stopped' : '');
+                const row = document.createElement('tr');
+                row.innerHTML = `
+          <td>${vmName}</td>
+          <td class="${statusClass}">${status}</td>`;
+                tbody.appendChild(row);
+            });
         }
 
-        // 首次載入
         loadResources();
     </script>
-
 </body>
 
 </html>

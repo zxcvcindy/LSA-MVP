@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>建立虛擬資源</title>
+    <title>建立 VM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
@@ -13,97 +13,137 @@
             background: #f8f8f8;
         }
 
-        form {
+        #createBox {
             background: #fff;
-            padding: 20px;
+            padding: 24px 32px;
             border-radius: 10px;
             max-width: 420px;
             margin: auto;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        h2 {
-            text-align: center;
+            box-shadow: 0 0 10px rgba(0, 0, 0, .08);
         }
 
         label {
             display: block;
-            margin-top: 12px;
+            margin-top: 14px;
         }
 
-        input,
-        select,
+        input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 6px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
         button {
             width: 100%;
-            padding: 8px;
-            margin-top: 6px;
-        }
-
-        button {
+            padding: 12px;
+            margin-top: 24px;
             background: #4c74af;
             color: #fff;
             border: none;
-            border-radius: 5px;
+            border-radius: 6px;
             cursor: pointer;
+            font-size: 1rem;
         }
 
-        button:hover {
-            background: #4c74af;
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
-        /* 狀態與 SSH 區塊 */
-        #status,
-        #ssh-info {
+        #statusBox {
             max-width: 420px;
             margin: 20px auto;
             padding: 15px;
+            border-left: 6px solid #4c74af;
             border-radius: 8px;
             background: #fff;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+            display: none;
             word-break: break-all;
         }
 
-        #status.loading {
-            border-left: 6px solid #f39c12;
-        }
-
-        #status.success {
-            border-left: 6px solid #4CAF50;
-        }
-
-        #status.error {
-            border-left: 6px solid #e74c3c;
+        #statusBox.error {
+            border-left-color: #e74c3c;
             color: #e74c3c;
         }
 
-        #ssh-info {
-            border-left: 6px solid #2d8cf0;
-            display: none;
-        }
-
-        code {
-            background: #eee;
-            padding: 2px 4px;
-            border-radius: 4px;
+        #statusBox.success {
+            border-left-color: #4CAF50;
         }
     </style>
 </head>
 
 <body>
-    <form id="createForm">
-        <h2>建立 VM 或 Container</h2>
+    <div id="createBox">
+        <h2 class="text-center mb-4">建立 VM</h2>
 
-        <label for="type">選擇資源類型：</label>
-        <select name="type" id="type" required>
-            <option value="vm">虛擬機 (VM)</option>
-            <option value="container">容器 (Container)</option>
-        </select>
+        <label for="passwordInput">登入密碼</label>
+        <input type="password" id="passwordInput" placeholder="未輸入則採預設 1234" />
 
-        <label for="name">名稱：</label>
-        <input type="text" id="name" name="name" required />
+        <button id="createBtn" onclick="createVM()">建立</button>
+    </div>
 
-        <button type="submit">建立</button>
-    </form>
+    <div id="statusBox"></div>
+
+    <script>
+        const API_BASE = 'http://157.230.41.208:5002';
+        const token = localStorage.getItem('token');
+
+        // 若無 token 直接導回登入
+        if (!token) {
+            alert('尚未登入或登入已過期，請重新登入');
+            location.href = '/login';
+        }
+
+        function setStatus(msg, type) {
+            const box = document.getElementById('statusBox');
+            box.textContent = msg;
+            box.className = type ? type : '';
+            box.style.display = 'block';
+        }
+
+        async function createVM() {
+            const btn = document.getElementById('createBtn');
+            const studentId = document.getElementById('studentId').value.trim();
+            const password = document.getElementById('passwordInput').value || '1234';
+
+            if (!studentId) {
+                alert('請輸入學號！');
+                return;
+            }
+
+            btn.disabled = true;
+            setStatus('建立中… 請稍候', '');
+
+            try {
+                const res = await fetch(`${API_BASE}/user-vm/create`, {
+                    method: 'POST',
+                    mode: 'cors',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ vmid: studentId, password })
+                });
+
+                const data = await res.json().catch(() => ({}));
+
+                if (res.ok) {
+                    setStatus(`建立成功！VM ID: ${studentId}，IP: ${data.ip || '（稍後取得）'}`, 'success');
+                    setTimeout(() => location.href = '/management', 1500);
+                } else {
+                    throw new Error(data.msg || res.statusText);
+                }
+            } catch (err) {
+                console.error(err);
+                setStatus(`建立失敗：${err.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    </script>
 </body>
 
 </html>

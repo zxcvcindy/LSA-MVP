@@ -110,7 +110,7 @@
         const data = await res.json().catch(() => ({}));
         console.log('登入成功，token:', data);
         if (data["access_token"]) {
-          localStorage.setItem('token', data.token);
+          localStorage.setItem('token', data["access_token"]);
         }
         alert('登入成功！');
         // 登入後導向使用者首頁或儀表板

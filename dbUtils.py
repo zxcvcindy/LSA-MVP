@@ -41,7 +41,7 @@ def validate_login(username, password):
 
 def get_user(user_id): #根據用戶 ID 獲取用戶信息
     db, cursor = get_db()
-    cursor.execute("SELECT id, name, email FROM users WHERE id = %s", (user_id,))
+    cursor.execute("SELECT id, email FROM users WHERE id = %s", (user_id,))
     user = cursor.fetchone()
     return user
 

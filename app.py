@@ -9,15 +9,10 @@ from flask_jwt_extended import (
     get_jwt_identity, jwt_required
 )
 from flask_cors import CORS
-# 正式環境請改成你的前端網域
+CORS(app, origins=['*'])  # 正式環境請改成你的前端網域
 
 app = Flask(__name__)
-CORS(app, origins=['*'])  
 
-# CORS(app, resources={r"/api/*": {"origins": [
-#     "*",
-#     "http://localhost:5002"
-# ]}})
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -187,6 +182,33 @@ def restart_vm(node, vmid):
 @jwt_required()
 def get_vm_status(node, vmid):
     return jsonify(proxmox_api.get_vm_status(node, vmid))
+
+@app.route("/nodes", methods=["GET"])
+@jwt_required()
+def list_nodes():
+    return jsonify(proxmox_api.get_nodes())
+
+
+@app.route("/vms/<node>", methods=["GET"])
+@jwt_required()
+def list_vms(node):
+    """Return every VM under the node with name / status / ip"""
+    return jsonify(proxmox_api.list_vms(node))
+
+
+@app.route("/vm/<node>/<int:vmid>/info", methods=["GET"])
+@jwt_required()
+def get_vm_info(node, vmid):
+    """Return name, power state, and IPv6 for a single VM"""
+    return jsonify(proxmox_api.get_vm_info(node, vmid))
+
+@app.route("/myvms", methods=["GET"])
+@jwt_required()
+def list_my_vms():
+    """依登入者 ID（JWT identity）回傳自己擁有的 VM 清單"""
+    user_id = get_jwt_identity()          # e.g. "student101"
+    vms = proxmox_api.list_vms_by_owner(node="pve", owner=user_id)
+    return jsonify(vms)
 
 
 # ---------------------------------------------------------------------------

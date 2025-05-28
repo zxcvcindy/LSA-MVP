@@ -1,6 +1,7 @@
 import time
 import requests
 import requests.packages.urllib3
+from typing import List, Dict
 
 requests.packages.urllib3.disable_warnings()
 
@@ -49,7 +50,7 @@ def wait_for_task(node: str, upid: str, timeout: int = 600) -> None:
     start = time.time()
     while True:
         r = requests.get(f"{BASE_URL}/nodes/{node}/tasks/{upid}/status",
-                        headers=HEADERS, verify=VERIFY_SSL)
+                         headers=HEADERS, verify=VERIFY_SSL)
         r.raise_for_status()
         st = r.json()["data"]
         if st["status"] == "stopped":
@@ -208,4 +209,50 @@ def build_ssh6_cmd(node: str, vmid: int, username: str) -> dict:
     ip6 = get_vm_ipv6(node, vmid)
     ssh = f"ssh {username}@[{ip6}]" if ip6 else None
     return {"ip6": ip6, "ssh": ssh}
+
+def list_vms(node: str) -> list[dict]:
+    """回傳節點下所有 VM 的基本資訊（不含 IP）。"""
+    url = f"{BASE_URL}/nodes/{node}/qemu"
+    r = requests.get(url, headers=HEADERS, verify=VERIFY_SSL)
+    r.raise_for_status()
+    return r.json().get("data", [])
+
+
+def get_vm_info(node: str, vmid: int) -> dict:
+    """回傳單一 VM 的名稱、電源狀態與 IPv6。"""
+    status_url = f"{BASE_URL}/nodes/{node}/qemu/{vmid}/status/current"
+    resp = requests.get(status_url, headers=HEADERS, verify=VERIFY_SSL)
+    if resp.status_code != 200:
+        return {"ok": False, "vmid": vmid, "error": resp.text}
+
+    data = resp.json().get("data", {})
+    name = data.get("name")
+    power = data.get("status")
+    ip6 = get_vm_ipv6(node, vmid)
+
+    return {
+        "ok": True,
+        "vmid": vmid,
+        "name": name,
+        "status": power,
+        "ip6": ip6,
+        "ssh": f"ssh {name}@[{ip6}]" if ip6 else None,
+    }
+
+def list_vms_by_owner(node: str, owner: str) -> List[Dict]:
+    """只回傳屬於登入者 (owner) 的 VM。約定名稱前綴 'vm-<user_id>'"""
+    all_vms = list_vms(node)
+    result = []
+    for vm in all_vms:
+        vmid = vm.get("vmid")
+        name = vm.get("name", "")
+        if name == f"vm-{owner}" or name.startswith(f"vm-{owner}-"):
+            result.append(get_vm_info(node, vmid))
+    return result
+
+def list_nodes() -> List[Dict]:
+    url = f"{BASE_URL}/nodes"
+    r = requests.get(url, headers=HEADERS, verify=VERIFY_SSL)
+    r.raise_for_status()
+    return r.json().get("data", [])
 

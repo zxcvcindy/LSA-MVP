@@ -80,7 +80,7 @@
 
     <div style="width:60%;min-width:320px;margin:auto;text-align:right">
         <button class="create" onclick="window.location='/create'">＋ 建立新資源</button>
-        <button class="logout" onclick="localStorage.removeItem('token')"> 登出</button>
+        <button class="logout" onclick="logout()"> 登出</button>
 
     </div>
 
@@ -138,6 +138,11 @@
         }
 
         loadResources();
+
+        function logout() {
+            localStorage.removeItem('token');
+            location.href = '/login';
+        }
     </script>
 </body>
 

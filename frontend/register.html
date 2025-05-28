@@ -90,38 +90,47 @@
     </form>
 
     <script>
-        const id = document.getElementById('id');
-        const username = document.getElementById('username');
-        const email = document.getElementById('email');
+        const userid = document.getElementById('userid');
+        const nameEl = document.getElementById('name');
+        const emailEl = document.getElementById('email');
         const pwd = document.getElementById('password');
+        const confirm = document.getElementById('confirm');
+        const pwdErr = document.getElementById('pwdErr');
 
         const API_BASE = 'http://157.230.41.208:5002/api';
-        async function register() {
-            const response = await fetch('${API_BASE}/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    id: id.value,
-                    username: username.value,
-                    email: email.value,
-                    password: pwd.value
-                })
-            });
-            if (response.ok) {
-                const data = await response.json();
-                if (data) {
-                    alert('註冊成功！');
-                    window.location.href = '/login';
+
+        document.getElementById('registerForm')
+            .addEventListener('submit', async (e) => {
+                e.preventDefault();                          // 阻止原生提交
+
+                if (pwd.value !== confirm.value) {           // 前端檢查
+                    pwdErr.style.display = 'block';
+                    return;
                 } else {
-                    alert('註冊失敗：' + data.message);
+                    pwdErr.style.display = 'none';
                 }
-            } else {
-                alert('伺服器錯誤，請稍後再試。');
-            }
-        }
+
+                const res = await fetch(`${API_BASE}/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: userid.value,
+                        name: nameEl.value,
+                        email: emailEl.value,
+                        password: pwd.value
+                    })
+                });
+
+                if (res.ok) {
+                    alert('註冊成功！');
+                    location.href = '/login';
+                } else {
+                    const data = await res.json().catch(() => ({}));
+                    alert('註冊失敗：' + (data.msg || res.statusText));
+                }
+            });
     </script>
+
 </body>
 
 </html>

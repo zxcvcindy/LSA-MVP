@@ -143,7 +143,7 @@ def create_user_vm_api():
         template_vmid=100,
         # new_vmid=new_vmid,
         # vm_name=vm_name,
-        username=user_id,
+        username=f"s{user_id}",
         password=password
     )
 

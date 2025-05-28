@@ -126,7 +126,7 @@
                 const data = await res.json().catch(() => ({}));
 
                 if (res.ok) {
-                    setStatus(`建立成功！VM ID: ${studentId}，IP: ${data.ip || '（稍後取得）'}`, 'success');
+                    setStatus(`建立成功！VM ID:IP: ${data.ip || '（稍後取得）'}`, 'success');
                     setTimeout(() => location.href = '/management', 1500);
                 } else {
                     throw new Error(data.msg || res.statusText);

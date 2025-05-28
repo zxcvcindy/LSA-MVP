@@ -87,6 +87,7 @@
             <tr>
                 <th>VM 名稱</th>
                 <th>狀態</th>
+                <th>SSH 指令</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -109,31 +110,29 @@
                 });
                 if (!res.ok) { throw new Error(res.statusText); }
                 const raw = await res.json();
-                const list = Array.isArray(raw) ? raw : (raw.data || []);
-                renderResources(list);
+                renderResources(raw);
             } catch (err) {
                 tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;color:#e74c3c;">載入失敗：${err.message}</td></tr>`;
                 console.error(err);
             }
         }
 
-        function renderResources(arr) {
-            if (arr.length === 0) {
+        function renderResources(data) {
+            if (data.length === 0) {
                 tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;">目前無資源</td></tr>';
                 return;
             }
             tbody.innerHTML = '';
-            arr.forEach(r => {
-                const vmName = r.vmname || r.name || r.vm_name || r.id || '-';
-                const statusRaw = r.STATUS || r.status || 'unknown';
-                const status = statusRaw.toString().toLowerCase();
-                const statusClass = status === 'running' ? 'status-running' : (status === 'stopped' ? 'status-stopped' : '');
-                const row = document.createElement('tr');
-                row.innerHTML = `
-          <td>${vmName}</td>
-          <td class="${statusClass}">${status}</td>`;
-                tbody.appendChild(row);
-            });
+            const vmName = data.name;
+            const statusRaw = data.status || 'unknown';
+            const status = statusRaw.toString().toLowerCase();
+            const statusClass = status === 'running' ? 'status-running' : (status === 'stopped' ? 'status-stopped' : '');
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${vmName}</td>
+                <td class="${statusClass}">${status}</td>
+                <td>${data.ssh}</td>`;
+            tbody.appendChild(row);
         }
 
         loadResources();

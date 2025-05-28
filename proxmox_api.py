@@ -228,7 +228,7 @@ def get_vm_info(node: str, vmid: int) -> dict:
         return {"ok": False, "vmid": vmid, "error": resp.text}
 
     data = resp.json().get("data", {})
-    name = data.get("name")
+    name = data.get("vmid")
     power = data.get("status")
     ip6 = get_vm_ipv6(node, vmid)
 

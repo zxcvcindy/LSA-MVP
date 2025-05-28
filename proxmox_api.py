@@ -23,6 +23,8 @@ def get_nodes():
     response = requests.get(url, headers=HEADERS, verify=False)
     return response.json()
 
+
+
 def start_vm(node, vmid):
     url = f"{BASE_URL}/nodes/{node}/qemu/{vmid}/status/start"
     response = requests.post(url, headers=HEADERS, verify=False)

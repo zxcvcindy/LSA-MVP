@@ -202,8 +202,8 @@ def get_vm_info(node, vmid):
 def list_my_vms():
     """依登入者 ID（JWT identity）回傳自己擁有的 VM 清單"""
     user_id = get_jwt_identity()          # e.g. "student101"
-    vms = proxmox_api.list_vms_by_owner(node="pve", owner=user_id)
-    return jsonify(vms)
+    result = proxmox_api.get_vm_info(node="pve", vmid=user_id)
+    return jsonify(result)
 
 
 # ---------------------------------------------------------------------------

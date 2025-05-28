@@ -133,7 +133,7 @@ def create_user_vm_api():
     user_id = get_jwt_identity()         # 目前登入者的帳號
     data = request.get_json()
 
-    new_vmid  = data["vmid"]
+    new_vmid  = user_id
     vm_name   = f"vm-{user_id}"
     password  = data.get("password","1234")
 
@@ -141,8 +141,8 @@ def create_user_vm_api():
     result = proxmox_api.create_user_vm(
         node="pve",
         template_vmid=100,
-        # new_vmid=new_vmid,
-        # vm_name=vm_name,
+        new_vmid=new_vmid,
+        vm_name=vm_name,
         username=f"s{user_id}",
         password=password
     )

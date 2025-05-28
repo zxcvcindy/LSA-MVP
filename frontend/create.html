@@ -106,13 +106,8 @@
 
         async function createVM() {
             const btn = document.getElementById('createBtn');
-            const studentId = document.getElementById('studentId').value.trim();
             const password = document.getElementById('passwordInput').value || '1234';
 
-            if (!studentId) {
-                alert('請輸入學號！');
-                return;
-            }
 
             btn.disabled = true;
             setStatus('建立中… 請稍候', '');
@@ -125,7 +120,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify({ vmid: studentId, password })
+                    body: JSON.stringify({ password })
                 });
 
                 const data = await res.json().catch(() => ({}));

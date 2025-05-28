@@ -48,7 +48,7 @@ def teardown_db(exception):
 # ---------------------------------------------------------------------------
 # Authentication
 # ---------------------------------------------------------------------------
-@app.route('/register', methods=['POST'])
+@app.route('/api/register', methods=['POST'])
 def register():
     app.logger.debug('Register route called')
     body = request.get_json() or {}

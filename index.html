@@ -1,82 +1,38 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
+<!doctype html>
 
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Lab 管理平台</title>
+<body>
+    <form id="registerForm">
+        <input id="userid" placeholder="user" required>
+        <input id="name" placeholder="name" required>
+        <input id="email" type="email" required>
+        <input id="password" type="password" required>
+        <button type="submit">送出</button>
+    </form>
 
-    <!-- Tailwind CDN：開發階段方便直接載入 -->
-    script src="https://cdn.tailwindcss.com"></script>
-</head>
+    <script>
+        const API_BASE = 'http://157.230.41.208:5002/api';
 
-<body class="bg-gray-50 min-h-screen flex items-center justify-center">
+        document.getElementById('registerForm')
+            .addEventListener('submit', async (e) => {
+                e.preventDefault();                                   // 關鍵 ①
 
-    <!-- ────── Login Section ────── -->
-    <div id="login-section" class="w-full max-w-sm p-6 bg-white rounded-lg shadow-md">
+                try {
+                    const res = await fetch(`${API_BASE}/register`, {   // 關鍵 ②
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            username: userid.value,
+                            name: name.value,
+                            email: email.value,
+                            password: password.value
+                        })
+                    });
 
-        <h2 class="text-2xl font-semibold text-center mb-6">登入</h2>
-
-        <form id="login-form" class="space-y-4">
-            <!-- 使用者 ID -->
-            <div>
-                <label for="user-id" class="block text-sm font-medium mb-1">
-                    使用者&nbsp;ID
-                </label>
-                <input id="user-id" type="text" required class="w-full border px-3 py-2 rounded"
-                    placeholder="student123" />
-            </div>
-
-            <!-- 密碼 -->
-            <div>
-                <label for="password" class="block text-sm font-medium mb-1">
-                    密碼
-                </label>
-                <input id="password" type="password" required class="w-full border px-3 py-2 rounded"
-                    placeholder="********" />
-            </div>
-
-            <!-- 錯誤訊息 -->
-            <p id="login-error" class="hidden text-red-600 text-sm"></p>
-
-            <!-- 送出 -->
-            <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded
-                        hover:bg-blue-700">
-                登入
-            </button>
-        </form>
-    </div>
-
-    <!-- ────── Dashboard Section ────── -->
-    <div id="dashboard-section" class="hidden w-full max-w-4xl mx-auto p-6">
-
-        <!-- 標題＋功能列 -->
-        <div class="flex items-center justify-between mb-6">
-            <h2 class="text-2xl font-semibold">我的 Lab</h2>
-
-            <div class="flex gap-3">
-                <button id="create-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"> 建立 Lab
-                </button>
-
-                <button id="logout-btn" class="bg-gray-300 px-4 py-2 rounded
-                    hover:bg-gray-400">
-                    登出
-                </button>
-            </div>
-        </div>
-
-        <!-- Lab 卡片容器 -->
-        <div id="labs-container" class="space-y-4"></div>
-    </div>
-
-    <!-- ────── Copy Toast ────── -->
-    <div id="copied-toast" class="hidden fixed bottom-6 left-1/2 -translate-x-1/2
-            bg-gray-800 text-white px-4 py-2 rounded shadow-lg">
-        已複製到剪貼簿！
-    </div>
-
-    <!-- ────── JS ────── -->
-    <script src="main.js" defer></script>
+                    if (!res.ok) throw new Error(res.status);
+                    alert('OK');
+                } catch (err) {
+                    alert('ERR ' + err);
+                }
+            });
+    </script>
 </body>
-
-</html>

@@ -86,7 +86,7 @@
 
         <div id="pwdErr" class="error">兩次密碼不一致！</div>
 
-        <button type="submit">註冊</button>
+        <button onclick="register" type="button">註冊</button>
     </form>
 
     <script>
@@ -97,39 +97,31 @@
         const confirm = document.getElementById('confirm');
         const pwdErr = document.getElementById('pwdErr');
 
-        const API_BASE = 'http://157.230.41.208:5002/api';
+        const API_BASE = 'http://157.230.41.208:5002';
 
-        document.getElementById('registerForm')
-            .addEventListener('submit', async (e) => {
-                e.preventDefault();                          // 阻止原生提交
-
-                if (pwd.value !== confirm.value) {           // 前端檢查
-                    pwdErr.style.display = 'block';
-                    return;
-                } else {
-                    pwdErr.style.display = 'none';
-                }
-
-                const res = await fetch('${API_BASE}/register', {
-                    mode: "cors",
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        username: userid.value,
-                        name: nameEl.value,
-                        email: emailEl.value,
-                        password: pwd.value
-                    })
-                });
-
-                if (res.ok) {
-                    alert('註冊成功！');
-                    location.href = '/login';
-                } else {
-                    const data = await res.json().catch(() => ({}));
-                    alert('註冊失敗：' + (data.msg || res.statusText));
-                }
+        async function register() {
+            const res = await fetch('${API_BASE}/register', {
+                mode: "cors",
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: userid.value,
+                    name: nameEl.value,
+                    email: emailEl.value,
+                    password: pwd.value
+                })
             });
+
+            console.log(res);
+
+            if (res.ok) {
+                alert('註冊成功！');
+                location.href = '/login';
+            } else {
+                const data = await res.json().catch(() => ({}));
+                alert('註冊失敗：' + (data.msg || res.statusText));
+            }
+        }
     </script>
 
 </body>

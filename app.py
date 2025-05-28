@@ -12,8 +12,12 @@ from flask_cors import CORS
 # 正式環境請改成你的前端網域
 
 app = Flask(__name__)
-CORS(app, origins=['*'])  
+# CORS(app, origins=['*'])  
 
+CORS(app, resources={r"/api/*": {"origins": [
+    "*",
+    "http://localhost:5002"
+]}})
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------

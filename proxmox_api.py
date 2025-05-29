@@ -238,7 +238,7 @@ def get_vm_info(node: str, vmid: int) -> dict:
         "name": name,
         "status": power,
         "ip6": ip6,
-        "ssh": f"ssh {name}@[{ip6}]" if ip6 else None,
+        "ssh": f"ssh s{name}@[{ip6}]" if ip6 else None,
     }
 
 def list_vms_by_owner(node: str, owner: str) -> List[Dict]:

@@ -92,10 +92,11 @@ def logout():
 # ---------------------------------------------------------------------------
 
 
-@app.route('/vm/<node>/<int:vmid>/start', methods=['POST'])
+@app.route('/myvm/start', methods=['POST'])
 @jwt_required()
-def start_vm(node, vmid):
-    return jsonify(proxmox_api.start_vm(node, vmid))
+def start_vm():
+    user_id = get_jwt_identity() 
+    return jsonify(proxmox_api.start_vm("pve", user_id))
 
 
 @app.route('/vm/<node>/<int:vmid>/stop', methods=['POST'])

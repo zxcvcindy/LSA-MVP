@@ -90,6 +90,7 @@
                 <th>VM 名稱</th>
                 <th>狀態</th>
                 <th>SSH 指令</th>
+                <th>操作</th>
             </tr>
         </thead>
         <tbody></tbody>
@@ -133,7 +134,8 @@
             row.innerHTML = `
                 <td>${vmName}</td>
                 <td class="${statusClass}">${status}</td>
-                <td>${data.ssh}</td>`;
+                <td>${data.ssh}</td>
+                <td><button onclick="">啟動</button></td>`;
             tbody.appendChild(row);
         }
 
@@ -142,6 +144,20 @@
         function logout() {
             localStorage.removeItem('token');
             location.href = '/login';
+        }
+
+        async function start() {
+            try {
+                const res = await fetch(`${API_BASE}/myvm/start`, {
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) { throw new Error(res.statusText); }
+                const raw = await res.json();
+                renderResources(raw);
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;color:#e74c3c;">載入失敗：${err.message}</td></tr>`;
+                console.error(err);
+            }
         }
     </script>
 </body>

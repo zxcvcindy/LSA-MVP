@@ -149,7 +149,8 @@
         async function start() {
             try {
                 const res = await fetch(`${API_BASE}/myvm/start`, {
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    method:"POST"
                 });
                 if (!res.ok) { throw new Error(res.statusText); }
                 const raw = await res.json();

@@ -160,7 +160,7 @@
                 <button onclick="start(${vmid})">啟動</button>
                 <button onclick="stop(${vmid})">停止</button>
                 <button onclick="restart(${vmid})">重啟</button>
-                <button onclick="deleteVM(${vmid})">刪除</button>
+                <button onclick="deletevm(${vmid})">刪除</button>
             </td>
         `;
                 tbody.appendChild(row);
@@ -238,7 +238,7 @@
             }
         }
 
-        async function deleteVM(vmid) {
+        async function deletevm(vmid) {
             try {
                 const res = await fetch(`${API_BASE}/vm/pve/${vmid}`, {
                     method: "DELETE",

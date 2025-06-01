@@ -173,10 +173,21 @@ def get_vm_ssh6(node, vmid):
     username = get_jwt_identity()
     return jsonify(proxmox_api.build_ssh6_cmd(node, vmid, username))
 
-@app.route('/vm/<node>/<int:vmid>', methods=['DELETE','OPTIONS'])
+# @app.route('/vm/<node>/<int:vmid>', methods=['DELETE','OPTIONS'])
+# @jwt_required()
+# def delete_vm(node, vmid):
+#     return jsonify(proxmox_api.delete_vm(node, vmid))
+# 刪除 VM ── 用 POST 方法
+@app.route('/vm/<node>/<int:vmid>/delete', methods=['POST', 'OPTIONS'])
 @jwt_required()
 def delete_vm(node, vmid):
-    return jsonify(proxmox_api.delete_vm(node, vmid))
+    if request.method == 'OPTIONS':
+        return '', 204          # CORS 預檢直接回 204
+
+    ok, msg = proxmox_api.delete_vm(node, vmid)   # 你原本的刪除邏輯
+    if ok:
+        return {"ok": True}, 200
+    return {"ok": False, "error": msg}, 500
 
 
 @app.route('/vm/<node>/<int:vmid>/restart', methods=['POST'])

@@ -238,19 +238,34 @@
             }
         }
 
-        async function deletevm(vmid) {
+        // async function deletevm(vmid) {
+        //     try {
+        //         const res = await fetch(`${API_BASE}/vm/pve/${vmid}`, {
+        //             method: "DELETE",
+        //             headers: {
+        //                 'Content-Type': 'application/json',
+        //                 'Authorization': `Bearer ${token}`
+        //             }
+        //         });
+        //         if (!res.ok) throw new Error(res.statusText);
+        //         loadResources();
+        //     } catch (err) {
+        //         showError(err);
+        //     }
+        // }
+        async function deleteVM(vmid) {
+            if (!confirm(`確定刪除 VM ${vmid}？`)) return;
             try {
-                const res = await fetch(`${API_BASE}/vm/pve/${vmid}`, {
-                    method: "DELETE",
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    }
+                const res = await fetch(`${API_BASE}/vm/pve/${vmid}/delete`, {
+                    method: "POST",
+                    headers: { Authorization: `Bearer ${token}` }
                 });
-                if (!res.ok) throw new Error(res.statusText);
-                loadResources();
+                const body = await res.json();
+                if (!res.ok || !body.ok) throw new Error(body.error || res.statusText);
+                loadResources();                       // 重新載入清單
             } catch (err) {
-                showError(err);
+                alert("刪除失敗：" + err.message);
+                console.error(err);
             }
         }
 

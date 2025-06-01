@@ -198,7 +198,7 @@ def delete_vm(node, vmid):
 
     try:
         # 1) 停機（若已關機會回 400 → stop_vm_safe 內部忽略）
-        proxmox_api.stop_vm_safe(node, vmid)
+        proxmox_api.stop_vm(node, vmid)
 
         # 2) 刪除，取得 UPID
         upid = proxmox_api.destroy_vm(node, vmid)  # e.g. "UPID:..."

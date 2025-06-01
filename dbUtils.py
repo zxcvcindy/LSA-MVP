@@ -118,11 +118,11 @@ def create_vm(user_id: int):
     }
 
 
-def list_vms(user_id: int):
+def list_allvms(user_id: int):
     """列出指定使用者的所有 VM。"""
     _, cursor = get_db()
     cursor.execute(
-        "SELECT vmid, name FROM vms WHERE user_id = %s ORDER BY vmid",
+        "SELECT id, name FROM vms WHERE user_id = %s ORDER BY id",
         (user_id,),
     )
     return cursor.fetchall()

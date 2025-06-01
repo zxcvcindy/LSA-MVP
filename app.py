@@ -204,10 +204,14 @@ def get_vm_info(node, vmid):
 @app.route("/myvms", methods=["GET"])
 @jwt_required()
 def list_my_vms():
-    """依登入者 ID（JWT identity）回傳自己擁有的 VM 清單"""
-    user_id = get_jwt_identity()          # e.g. "student101"
+    user_id = get_jwt_identity()
     result = proxmox_api.get_vm_info(node="pve", vmid=user_id)
-    return jsonify(result)
+
+    if result and isinstance(result, dict):
+        return jsonify([result])  # ✅ 包成 list
+    else:
+        return jsonify([])  # ✅ 回傳空陣列（前端就會顯示「目前無資源」）
+
 
 
 # ---------------------------------------------------------------------------

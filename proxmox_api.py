@@ -97,7 +97,7 @@ def get_vm_ipv6(node: str, vmid: int) -> str | None:
 
 
 def create_user_vm(node: str,
-                   template_vmid: int,
+                   template_vmid: int, 
                    new_vmid: int,
                    vm_name: str,
                    username: str,

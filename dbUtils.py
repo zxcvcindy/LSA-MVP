@@ -86,57 +86,36 @@ def register_user(name: str, raw_password: str, email: str):
 def create_vm(user_id: int):
     db, cursor = get_db()
 
-    # --- 1) 啟動交易 ---
-    db.start_transaction(isolation_level="READ COMMITTED")
+    # 查出使用者名稱
+    cursor.execute("SELECT name FROM users WHERE id = %s", (user_id,))
+    user = cursor.fetchone()
+    if not user:
+        raise ValueError("找不到使用者")
 
-    try:
-        # --- 2) 查使用者名稱 ---
-        cursor.execute("SELECT name FROM users WHERE id = %s", (user_id,))
-        row = cursor.fetchone()
-        if not row:
-            raise ValueError("找不到使用者")
-        base_name = row["name"]
+    base_name = user["name"]
 
-        # --- 3) 鎖住該使用者所有 VM 再計算序號 ---
-        cursor.execute(
-            """
-            SELECT name FROM vms
-            WHERE user_id = %s
-            FOR UPDATE
-            """,
-            (user_id,),
-        )
-        existing_names = [r["name"] for r in cursor.fetchall()]
+    # 查出已有的同名 VM 數量
+    cursor.execute(
+        "SELECT COUNT(*) AS count FROM vms WHERE user_id = %s AND name LIKE %s",
+        (user_id, f"{base_name}-%",)
+    )
+    count = cursor.fetchone()["count"]
 
-        # 取出同名 VM 的最大序號
-        max_idx = 0
-        for n in existing_names:
-            if n.startswith(f"{base_name}-"):
-                try:
-                    idx = int(n.split("-")[-1])
-                    max_idx = max(max_idx, idx)
-                except ValueError:
-                    pass  # 不是純數字結尾就略過
+    # 建立新 VM 名稱（例如：小明-1、小明-2）
+    vm_name = f"{base_name}-{count + 1}"
 
-        vm_name = f"{base_name}-{max_idx + 1}"
+    # 插入資料
+    cursor.execute(
+        "INSERT INTO vms (user_id, name) VALUES (%s, %s)",
+        (user_id, vm_name),
+    )
+    db.commit()
+    vmid = cursor.lastrowid
 
-        # --- 4) 嘗試插入 ---
-        cursor.execute(
-            "INSERT INTO vms (user_id, name) VALUES (%s, %s)",
-            (user_id, vm_name),
-        )
-        vmid = cursor.lastrowid
-
-        # --- 5) 交易成功 ---
-        db.commit()
-        return {"vmid": vmid, "vm_name": vm_name}
-
-    except mysql.connector.Error as err:
-        db.rollback()
-        # 如果是 Duplicate entry，再重試一次或回傳自定錯訊
-        if err.errno == 1062:      # ER_DUP_ENTRY
-            raise RuntimeError("系統忙碌，請稍後再試")
-        raise
+    return {
+        "vmid": vmid,
+        "vm_name": vm_name
+    }
 
 
 def list_vms(user_id: int):

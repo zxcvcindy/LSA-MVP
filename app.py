@@ -135,7 +135,6 @@ def list_user_vm_api():
 @app.route('/user-vm/create', methods=['POST'])
 @jwt_required()
 def create_user_vm_api():
-    current_app.logger.warning(">>> hit /user-vm/create")
     user_id = get_jwt_identity()   # 目前登入者的帳號
     vmid = create_vm(user_id)["vmid"]  # 建立 VM 時的 VM ID
     data = request.get_json()
@@ -147,7 +146,7 @@ def create_user_vm_api():
     # 1. 建 VM
     result = proxmox_api.create_user_vm(
         node="pve",
-        template_vmid=110,
+        template_vmid=100,
         new_vmid=new_vmid,
         vm_name=vm_name,
         username=f"s{user_id}",

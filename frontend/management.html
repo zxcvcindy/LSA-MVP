@@ -152,7 +152,10 @@
             <td>${vmName}</td>
             <td class="${statusClass}">${status}</td>
             <td>${sshCmd}</td>
-            <td><button onclick="start()">啟動</button></td>
+            <td><button onclick="start()">start</button></td>
+            <td><button onclick="start()">stop</button></td>
+            <td><button onclick="start()">restart</button></td>
+            <td><button onclick="start()">delete</button></td>
         `;
                 tbody.appendChild(row);
             }
@@ -180,6 +183,55 @@
                 console.error(err);
             }
         }
+
+        async function stop() {
+            try {
+                const res = await fetch(`${API_BASE}/myvm/stop`, {
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    method: "POST"
+                });
+                if (!res.ok) { throw new Error(res.statusText); }
+                const raw = await res.json();
+                renderResources(raw);
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;color:#e74c3c;">載入失敗：${err.message}</td></tr>`;
+                console.error(err);
+            }
+
+        }
+
+        async function restart() {
+            try {
+                const res = await fetch(`${API_BASE}/myvm/restart`, {
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    method: "POST"
+                });
+                if (!res.ok) { throw new Error(res.statusText); }
+                const raw = await res.json();
+                renderResources(raw);
+            } catch (err) {
+
+                tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;color:#e74c3c;">載入失敗：${err.message}</td></tr>`;
+                console.error(err);
+            }
+        }
+
+        async function deleteVM() {
+            try {
+                const res = await fetch(`${API_BASE}/myvm/delete`, {
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    method: "POST"
+                });
+                if (!res.ok) { throw new Error(res.statusText); }
+                const raw = await res.json();
+                renderResources(raw);
+
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;color:#e74c3c;">載入失敗：${err.message}</td></tr>`;
+                console.error(err);
+            }
+        }
+
     </script>
 </body>
 

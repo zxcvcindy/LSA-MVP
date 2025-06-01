@@ -135,12 +135,12 @@ def list_user_vm_api():
 @app.route('/user-vm/create', methods=['POST'])
 @jwt_required()
 def create_user_vm_api():
-    vmname = create_vm(vm_name)   # 目前登入者的帳號
+    user_id = get_jwt_identity()   # 目前登入者的帳號
     vmid = create_vm(vmid)  
     data = request.get_json()
 
     new_vmid  = vmid
-    vm_name   = f"vm-{vmname}"
+    vm_name   = f"vm-{create_vm(vm_name)}"
     password  = data.get("password","1234")
 
     # 1. 建 VM
@@ -149,13 +149,13 @@ def create_user_vm_api():
         template_vmid=110,
         new_vmid=new_vmid,
         vm_name=vm_name,
-        username=f"s{vmname}",
+        username=f"s{user_id}",
         password=password
     )
 
     # 2. 若成功，再取 IPv6 / SSH 並一起回傳
     if result.get("ok"):
-        netinfo = proxmox_api.build_ssh6_cmd("pve", new_vmid, username=vm_name)
+        netinfo = proxmox_api.build_ssh6_cmd("pve", new_vmid, vm_name)
         return jsonify({**result, **netinfo}), 201
 
     # 3. 失敗照原格式回傳

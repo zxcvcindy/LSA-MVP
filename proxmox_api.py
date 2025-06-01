@@ -258,14 +258,40 @@ def list_nodes() -> List[Dict]:
     r.raise_for_status()
     return r.json().get("data", [])
 
-_UPID_RE = re.compile(r"UPID:[^:]+:[0-9A-F]+:\w+")
 
-def _wait_task_ok(node: str, upid: str, timeout: int = 120, interval: int = 2):
-    """輪詢 task 狀態直到 exitstatus == OK；失敗就 raise。"""
+# ------------------------------------------------------------------
+# delete
+
+_UPID_RE = re.compile(r"UPID:[^:]+:[0-9A-F]+:\w+")
+# ------------------------------------------------------------------
+#  公用：安全關機
+# ------------------------------------------------------------------
+def stop_vm_safe(node: str, vmid: int) -> None:
+    """
+    嘗試停機；若 VM 本來就關著會得到 400 'is not running'，
+    這裡直接忽略視為成功。
+    """
+    url = f"{BASE_URL}/nodes/{node}/qemu/{vmid}/status/stop"
+    r = requests.post(url, headers=HEADERS, verify=VERIFY_SSL)
+    if r.status_code in (200, 202):          # 200=立即成功，202=背景任務
+        return
+    if r.status_code == 400 and "not running" in r.text.lower():
+        return
+    r.raise_for_status()                     # 其他情況直接拋例外
+
+
+# ------------------------------------------------------------------
+#  公用：等待 PVE 背景任務完成
+# ------------------------------------------------------------------
+def _wait_task_ok(node: str, upid: str,
+                  timeout: int = 120, interval: int = 2) -> None:
+    """輪詢任務直到 OK；逾時或失敗 raise。"""
     deadline = time.time() + timeout
     while time.time() < deadline:
-        url = f"{BASE_URL}/nodes/{node}/tasks/{upid}/status"
-        r = requests.get(url, headers=HEADERS, verify=False)
+        r = requests.get(
+            f"{BASE_URL}/nodes/{node}/tasks/{upid}/status",
+            headers=HEADERS, verify=VERIFY_SSL
+        )
         r.raise_for_status()
         data = r.json()["data"]
         if data["status"] == "stopped":
@@ -273,44 +299,50 @@ def _wait_task_ok(node: str, upid: str, timeout: int = 120, interval: int = 2):
                 return
             raise RuntimeError(f"Task failed: {data['exitstatus']}")
         time.sleep(interval)
-    raise TimeoutError("PVE task timeout")
+    raise TimeoutError(f"Task {upid} timeout after {timeout}s")
 
 
-def destroy_vm(node: str, vmid: int) -> str:
-    """送出刪除指令，回傳 UPID 字串。失敗 raise。"""
+def destroy_vm(node: str, vmid: int, verify_ssl: bool = VERIFY_SSL) -> str:
+    """
+    向 PVE 發出『刪除 VM』指令，並回傳背景任務的 UPID 字串。
+    若 API 回傳格式異常或 HTTP 非 2xx 會 raise 例外。
+    """
     url = f"{BASE_URL}/nodes/{node}/qemu/{vmid}"
-    r = requests.delete(url, headers=HEADERS, verify=False)
-    r.raise_for_status()
-    txt = (r.json()["data"]               # 有時在 JSON
-           if r.headers.get("Content-Type", "").startswith("application/json")
-           else r.text.strip())           # 有時純文字
+    r   = requests.delete(url, headers=HEADERS, verify=verify_ssl)
+    r.raise_for_status()                         # 非 2xx 直接丟
+
+    # PVE 有時把 UPID 放在 JSON data，有時純文字回傳
+    if r.headers.get("Content-Type", "").startswith("application/json"):
+        txt = r.json().get("data", "")
+    else:
+        txt = r.text.strip()
+
     m = _UPID_RE.search(txt)
     if not m:
         raise RuntimeError(f"Cannot parse UPID from response: {txt}")
-    return m.group(0)
 
-def stop_vm_safe(node: str, vmid: int):
-    """嘗試關機；若已關機會回 400 'VM is not running'，視為成功。"""
-    url = f"{BASE_URL}/nodes/{node}/qemu/{vmid}/status/stop"
-    r = requests.post(url, headers=HEADERS, verify=False)
-    if r.status_code in (200, 202):       # 200=立即成功, 202=背景任務
-        return
-    if r.status_code == 400 and "not running" in r.text.lower():
-        return
-    r.raise_for_status()                  # 其他錯直接丟例外
-
-
+    return m.group(0) 
+# ------------------------------------------------------------------
+#  刪除 VM：停機 ➜ destroy ➜ 等待
+# ------------------------------------------------------------------
 def delete_vm(node: str, vmid: int, timeout: int = 120) -> dict:
     """
-    刪除一台 VM（停機→destroy→等待任務成功）
-    回傳：
-        {"ok": True,  "upid": "..."}  或
+    刪除一台 VM。成功回：
+        {"ok": True,  "upid": "..."}
+    失敗回：
         {"ok": False, "error": "..."}
     """
     try:
-        stop_vm(node, vmid)                 # 1) 關機（若已關閉視為成功）
-        upid = destroy_vm(node, vmid)            # 2) 送刪除取得 UPID
-        _wait_task_ok(node, upid, timeout)       # 3) 等任務完成
+        # 1) 停機（若本來就關機會被 stop_vm_safe 自動略過）
+        stop_vm_safe(node, vmid)
+
+        # 2) 發刪除指令，取得 UPID
+        upid = destroy_vm(node, vmid)        # destroy_vm 已定義在下方
+
+        # 3) 監看任務直到 exitstatus == OK
+        _wait_task_ok(node, upid, timeout)
+
         return {"ok": True, "upid": upid}
+
     except Exception as exc:
         return {"ok": False, "error": str(exc)}

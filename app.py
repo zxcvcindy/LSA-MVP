@@ -206,7 +206,8 @@ def get_vm_info(node, vmid):
 @jwt_required()
 def list_my_vms():
     user_id = get_jwt_identity()
-    result = proxmox_api.get_vm_info(node="pve", vmid=user_id)
+    # vmid = list_vms(user_id)["vmid"]  # 取得新 VM 的 ID
+    result = proxmox_api.get_vm_info(node="pve", vmid= list_vms(user_id)["vmid"] )
 
     if result and isinstance(result, dict):
         return jsonify([result])  # ✅ 包成 list

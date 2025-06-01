@@ -188,25 +188,6 @@ def delete_vm(node, vmid):
 
     current_app.logger.warning(">>> user %s req DEL vm %s", user_id, vmid)
 
-    try:
-        # ── 1) 停機（若已關機，PVE 會立即回 400; 我們抓例外繼續） ──
-        proxmox_api.stop_vm_safe(node, vmid)      # 自己包一層，400 ignore
-        # ── 2) 刪除，拿到 UPID ──
-        upid = proxmox_api.destroy_vm(node, vmid) # 回傳字串 "UPID:..."
-        # ── 3) 輪詢 task，直到 exitstatus == OK ──
-        proxmox_api.wait_task_ok(node, upid, timeout=120)
-
-        # ── 4) 刪 DB ──
-        cur.execute("DELETE FROM vms WHERE vmid=%s AND user_id=%s",
-                    (vmid, user_id))
-        db.commit()
-
-        return {"ok": True}, 200
-
-    except Exception as e:
-        db.rollback()
-        current_app.logger.error("DELETE VM %s failed: %s", vmid, e)
-        return {"ok": False, "error": str(e)}, 500
 
 @app.route('/vm/<node>/<int:vmid>/restart', methods=['POST'])
 @jwt_required()

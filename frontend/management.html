@@ -255,19 +255,22 @@
         // }
         async function deleteVM(vmid) {
             if (!confirm(`確定刪除 VM ${vmid}？`)) return;
+
             try {
                 const res = await fetch(`${API_BASE}/vm/pve/${vmid}/delete`, {
                     method: "POST",
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 const body = await res.json();
+
                 if (!res.ok || !body.ok) throw new Error(body.error || res.statusText);
-                loadResources();                       // 重新載入清單
+
+                loadResources();                  // 真的刪掉才刷新
             } catch (err) {
                 alert("刪除失敗：" + err.message);
-                console.error(err);
             }
         }
+
 
 
     </script>

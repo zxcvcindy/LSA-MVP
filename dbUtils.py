@@ -135,3 +135,37 @@ def list_allvms(user_id: int) -> list[dict]:
     )
     rows = cursor.fetchall()        # rows already list[dict] (because cursor=dict=True)
     return rows
+
+def delete_vm(user_id: int, vmid: int):
+    """
+    刪除指定 VM 的資料庫紀錄。
+    1. 先從 Proxmox 刪除 VM
+    2. 再從本地 DB 刪除紀錄
+    """
+    db, cursor = get_db()
+
+    # Step 1: 刪除 Proxmox 上的 VM
+    try:
+        from proxmox_api import delete_vm as proxmox_delete_vm
+        upid = proxmox_delete_vm(node="pve", vmid=vmid)  # 假設 node 名稱為 pve
+    except Exception as e:
+        current_app.logger.error("Failed to delete VM %s: %s", vmid, e)
+        return {"ok": False, "error": str(e)}, 500
+
+    # Step 2: 等待 Proxmox 任務完成
+    try:
+        from proxmox_api import wait_task_ok
+        wait_task_ok(node="pve", upid=upid, timeout=120)
+    except Exception as e:
+        current_app.logger.error("Failed to wait for task %s: %s", upid, e)
+        return {"ok": False, "error": str(e)}, 500
+
+    # Step 3: 刪除本地 DB 紀錄
+    try:
+        cursor.execute("DELETE FROM vms WHERE vmid = %s AND user_id = %s", (vmid, user_id))
+        db.commit()
+        return {"ok": True}, 200
+    except Exception as e:
+        db.rollback()
+        current_app.logger.error("Failed to delete VM %s from DB: %s", vmid, e)
+        return {"ok": False, "error": str(e)}, 500          

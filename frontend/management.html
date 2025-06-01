@@ -138,6 +138,9 @@
 
             // 遍歷每個 VM 資料，渲染表格
             for (const vm of data) {
+                // ✅ 跳過「沒有 vmid 或狀態」的空資料
+                if (!vm || !vm.vmid || !vm.status) continue;
+
                 const vmName = vm.name || '未命名';
                 const statusRaw = vm.status || 'unknown';
                 const sshCmd = vm.ssh || '-';

@@ -204,8 +204,10 @@ def delete_vm(node, vmid):
         return jsonify({"ok": True}), 200
 
     db.rollback()
-    current_app.logger.error("DELETE VM %s failed: %s", vmid, result.get("error"))
+    current_app.logger.error("DELETE VM %s failed: %s", id, result.get("error"))
     return jsonify({"ok": False, "error": result.get("error", "Unknown")}), 500
+
+
 
 @app.route('/vm/<node>/<int:vmid>/restart', methods=['POST'])
 @jwt_required()

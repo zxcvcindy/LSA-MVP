@@ -289,6 +289,17 @@ def destroy_vm(node: str, vmid: int) -> str:
         raise RuntimeError(f"Cannot parse UPID from response: {txt}")
     return m.group(0)
 
+def stop_vm_safe(node: str, vmid: int):
+    """嘗試關機；若已關機會回 400 'VM is not running'，視為成功。"""
+    url = f"{BASE_URL}/nodes/{node}/qemu/{vmid}/status/stop"
+    r = requests.post(url, headers=HEADERS, verify=False)
+    if r.status_code in (200, 202):       # 200=立即成功, 202=背景任務
+        return
+    if r.status_code == 400 and "not running" in r.text.lower():
+        return
+    r.raise_for_status()                  # 其他錯直接丟例外
+
+
 def delete_vm(node: str, vmid: int, timeout: int = 120) -> dict:
     """
     刪除一台 VM（停機→destroy→等待任務成功）

@@ -106,9 +106,10 @@ def create_vm(user_id: int):
 
     # 插入資料
     cursor.execute(
-        "INSERT INTO vms (user_id, name) VALUES (%s, %s)",
-        (user_id, vm_name),
-    )
+    "INSERT INTO vms (user_id, name) VALUES (%s, CONCAT(%s, '-', UUID_SHORT()))",
+    (user_id, base_name),
+)
+
     db.commit()
     vmid = cursor.lastrowid
 

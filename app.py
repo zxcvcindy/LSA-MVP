@@ -1,7 +1,7 @@
 import logging
 import os
 
-from flask import Flask, request, jsonify, flash ,redirect
+from flask import Flask, request, jsonify, flash ,render_template
 import proxmox_api
 from dbUtils import close_db, validate_login, register_user
 from flask_jwt_extended import (
@@ -44,7 +44,7 @@ def teardown_db(exception):
 # ---------------------------------------------------------------------------
 @app.route('/')
 def home():
-    return redirect('/login')
+    return render_template('login.html')
 
 @app.route('/register', methods=['POST'])
 def register():

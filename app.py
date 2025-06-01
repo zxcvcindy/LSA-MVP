@@ -155,7 +155,7 @@ def create_user_vm_api():
 
     # 2. 若成功，再取 IPv6 / SSH 並一起回傳
     if result.get("ok"):
-        netinfo = proxmox_api.build_ssh6_cmd("pve", new_vmid, user_id)
+        netinfo = proxmox_api.build_ssh6_cmd("pve", new_vmid, username=vm_name)
         return jsonify({**result, **netinfo}), 201
 
     # 3. 失敗照原格式回傳

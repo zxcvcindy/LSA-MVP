@@ -135,7 +135,7 @@
                 <td>${vmName}</td>
                 <td class="${statusClass}">${status}</td>
                 <td>${data.ssh}</td>
-                <td><button onclick="">啟動</button></td>`;
+                <td><button onclick="start()">啟動</button></td>`;
             tbody.appendChild(row);
         }
 
@@ -149,7 +149,8 @@
         async function start() {
             try {
                 const res = await fetch(`${API_BASE}/myvm/start`, {
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    method:"POST"
                 });
                 if (!res.ok) { throw new Error(res.statusText); }
                 const raw = await res.json();

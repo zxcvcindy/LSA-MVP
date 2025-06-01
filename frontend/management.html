@@ -121,7 +121,7 @@
         }
 
         function renderResources(data) {
-            // 如果不是陣列或是空陣列，就顯示「沒有任何資源」
+            // 如果不是陣列或是空陣列，就顯示「目前沒有任何資源」
             if (!Array.isArray(data) || data.length === 0) {
                 tbody.innerHTML = `
             <tr>
@@ -141,6 +141,7 @@
                 const vmName = vm.name || '未命名';
                 const statusRaw = vm.status || 'unknown';
                 const sshCmd = vm.ssh || '-';
+                const vmid = vm.vmid;
 
                 const status = statusRaw.toLowerCase();
                 const statusClass = status === 'running'
@@ -152,14 +153,17 @@
             <td>${vmName}</td>
             <td class="${statusClass}">${status}</td>
             <td>${sshCmd}</td>
-            <td><button onclick="start()">start</button></td>
-            <td><button onclick="stop()">stop</button></td>
-            <td><button onclick="restart()">restart</button></td>
-            <td><button onclick="delete()">delete</button></td>
+            <td>
+                <button onclick="start(${vmid})">啟動</button>
+                <button onclick="stop(${vmid})">停止</button>
+                <button onclick="restart(${vmid})">重啟</button>
+                <button onclick="deleteVM(${vmid})">刪除</button>
+            </td>
         `;
                 tbody.appendChild(row);
             }
         }
+
 
 
         loadResources();
@@ -168,69 +172,70 @@
             localStorage.removeItem('token');
             location.href = '/login';
         }
-
-        async function start() {
+        async function start(vmid) {
             try {
-                const res = await fetch(`${API_BASE}/myvm/start`, {
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    method: "POST"
+                const res = await fetch(`${API_BASE}/vm/pve/${vmid}/start`, {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
                 });
-                if (!res.ok) { throw new Error(res.statusText); }
-                const raw = await res.json();
-                renderResources(raw);
+                if (!res.ok) throw new Error(res.statusText);
+                loadResources(); // 重新載入 VM 狀態
             } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;color:#e74c3c;">載入失敗：${err.message}</td></tr>`;
-                console.error(err);
+                showError(err);
             }
         }
 
-        async function stop() {
+        async function stop(vmid) {
             try {
-                const res = await fetch(`${API_BASE}/myvm/stop`, {
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    method: "POST"
+                const res = await fetch(`${API_BASE}/vm/pve/${vmid}/stop`, {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
                 });
-                if (!res.ok) { throw new Error(res.statusText); }
-                const raw = await res.json();
-                renderResources(raw);
+                if (!res.ok) throw new Error(res.statusText);
+                loadResources();
             } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;color:#e74c3c;">載入失敗：${err.message}</td></tr>`;
-                console.error(err);
-            }
-
-        }
-
-        async function restart() {
-            try {
-                const res = await fetch(`${API_BASE}/myvm/restart`, {
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    method: "POST"
-                });
-                if (!res.ok) { throw new Error(res.statusText); }
-                const raw = await res.json();
-                renderResources(raw);
-            } catch (err) {
-
-                tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;color:#e74c3c;">載入失敗：${err.message}</td></tr>`;
-                console.error(err);
+                showError(err);
             }
         }
 
-        async function deleteVM() {
+        async function restart(vmid) {
             try {
-                const res = await fetch(`${API_BASE}/myvm/delete`, {
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    method: "POST"
+                const res = await fetch(`${API_BASE}/vm/pve/${vmid}/restart`, {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
                 });
-                if (!res.ok) { throw new Error(res.statusText); }
-                const raw = await res.json();
-                renderResources(raw);
-
+                if (!res.ok) throw new Error(res.statusText);
+                loadResources();
             } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;color:#e74c3c;">載入失敗：${err.message}</td></tr>`;
-                console.error(err);
+                showError(err);
             }
         }
+
+        async function deleteVM(vmid) {
+            try {
+                const res = await fetch(`${API_BASE}/vm/pve/${vmid}`, {
+                    method: "DELETE",
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (!res.ok) throw new Error(res.statusText);
+                loadResources();
+            } catch (err) {
+                showError(err);
+            }
+        }
+
 
     </script>
 </body>

@@ -173,7 +173,7 @@ def get_vm_ssh6(node, vmid):
     username = get_jwt_identity()
     return jsonify(proxmox_api.build_ssh6_cmd(node, vmid, username))
 
-@app.route('/vm/<node>/<int:vmid>/deletevm', methods=['DELETE','OPTIONS'])
+@app.route('/vm/<node>/<int:vmid>', methods=['DELETE','OPTIONS'])
 @jwt_required()
 def delete_vm(node, vmid):
     return jsonify(proxmox_api.delete_vm(node, vmid))

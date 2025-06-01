@@ -29,24 +29,81 @@ def close_db(e=None):
         cursor.close()
     if db is not None:
         db.close()
-
-def validate_login(username, password):
-    db, cursor = get_db()
-    cursor.execute("SELECT * FROM users WHERE id = %s AND password = %s", (username, password))
+def validate_login(name: str, raw_password: str):
+    """
+    用 users.name + 明文密碼登入。
+    找到就回傳使用者 dict（不含 password）；否則 None。
+    """
+    _, cursor = get_db()
+    cursor.execute(
+        "SELECT id, name, password, email, create_time "
+        "FROM users WHERE name = %s AND password = %s",
+        (name, raw_password),
+    )
     user = cursor.fetchone()
     if user:
-        return get_user(username)
+        user.pop("password", None)        # 移除密碼再回傳
+        return user
     return None
 
 
-def get_user(user_id): #根據用戶 ID 獲取用戶信息
-    db, cursor = get_db()
-    cursor.execute("SELECT id, email FROM users WHERE id = %s", (user_id,))
-    user = cursor.fetchone()
-    return user
+def get_user(user_id: int):
+    """依 id 取得使用者（不含 password）。"""
+    _, cursor = get_db()
+    cursor.execute(
+        "SELECT id, name, email, create_time FROM users WHERE id = %s",
+        (user_id,),
+    )
+    return cursor.fetchone()
 
-def register_user(username, password, email): #註冊新用戶
+
+def register_user(name: str, raw_password: str, email: str):
+    """
+    註冊新使用者（明文密碼）：
+    1. name 必須唯一
+    2. 成功回傳使用者 dict
+    """
     db, cursor = get_db()
-    cursor.execute("INSERT INTO users (id, password, email) VALUES (%s, %s, %s)", (username, password, email))
+
+    # 檢查 name 是否重複
+    cursor.execute("SELECT 1 FROM users WHERE name = %s", (name,))
+    if cursor.fetchone():
+        raise ValueError("Name already taken")
+
+    cursor.execute(
+        """
+        INSERT INTO users (name, password, email)
+        VALUES (%s, %s, %s)
+        """,
+        (name, raw_password, email),
+    )
     db.commit()
-    return get_user(username)
+    new_user_id = cursor.lastrowid
+    return get_user(new_user_id)
+
+
+# ---------- VM 相關（參考） ---------- #
+def create_vm(user_id: int, vm_name: str):
+    """建立 VM；vmid 自動從 100 起遞增。"""
+    db, cursor = get_db()
+    cursor.execute(
+        "INSERT INTO vms (user_id, name) VALUES (%s, %s)",
+        (user_id, vm_name),
+    )
+    db.commit()
+    vmid = cursor.lastrowid
+    cursor.execute(
+        "SELECT vmid, user_id, name FROM vms WHERE vmid = %s",
+        (vmid,),
+    )
+    return cursor.fetchone()
+
+
+def list_vms(user_id: int):
+    """列出指定使用者的所有 VM。"""
+    _, cursor = get_db()
+    cursor.execute(
+        "SELECT vmid, name FROM vms WHERE user_id = %s ORDER BY vmid",
+        (user_id,),
+    )
+    return cursor.fetchall()

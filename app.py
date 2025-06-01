@@ -179,6 +179,7 @@ def get_vm_ssh6(node, vmid):
 #     return jsonify(proxmox_api.delete_vm(node, vmid))
 # 刪除 VM ── 用 POST 方法
 # app.py 片段
+
 @app.route('/vm/<node>/<int:vmid>/delete', methods=['POST'])
 @jwt_required()
 def delete_vm(node, vmid):

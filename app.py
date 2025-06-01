@@ -179,42 +179,33 @@ def get_vm_ssh6(node, vmid):
 #     return jsonify(proxmox_api.delete_vm(node, vmid))
 # 刪除 VM ── 用 POST 方法
 
+
 @app.route('/vm/<node>/<int:vmid>/delete', methods=['POST', 'OPTIONS'])
 @jwt_required()
 def delete_vm(node, vmid):
     """POST /vm/pve/<vmid>/delete
-    流程：停機 → 刪除 → 等待 UPID 成功 → 刪 DB
-    OPTIONS 預檢直接回 204，前端才能送 POST。
+    使用 proxmox_api.delete_vm 封裝：
+        • 停機 → 刪除 → 等待任務完成
+        • 成功回 {ok: True}
+        • 失敗回 {ok: False, error: ...}
+    本函式只負責 DB 與回應狀態碼。
     """
-    # ── CORS 預檢 ─────────────────────────────────────
     if request.method == "OPTIONS":
         return "", 204
 
     user_id = get_jwt_identity()
-    db, cur = get_db()
+    db, _ = get_db()
 
-    current_app.logger.warning(">>> user %s req DEL vm %s", user_id, vmid)
+    result = proxmox_api.delete_vm(node, vmid)  # 已做完整流程
 
-    try:
-        # 1) 停機（若已關機會回 400 → stop_vm 內部忽略）
-        proxmox_api.stop_vm(node, vmid)
-
-        # 2) 刪除，取得 UPID
-        upid = proxmox_api.destroy_vm(node, vmid)  # e.g. "UPID:..."
-
-        # 3) 等待任務完成
-        proxmox_api._wait_task_ok(node, upid, timeout=120)
-
-        # 4) 刪除資料庫紀錄
+    if result.get("ok"):
         delete_vm(user_id, vmid)
         db.commit()
-
         return jsonify({"ok": True}), 200
 
-    except Exception as e:
-        db.rollback()
-        current_app.logger.error("DELETE VM %s failed: %s", vmid, e)
-        return jsonify({"ok": False, "error": str(e)}), 500
+    db.rollback()
+    current_app.logger.error("DELETE VM %s failed: %s", vmid, result.get("error"))
+    return jsonify({"ok": False, "error": result.get("error", "Unknown")}), 500
 
 @app.route('/vm/<node>/<int:vmid>/restart', methods=['POST'])
 @jwt_required()

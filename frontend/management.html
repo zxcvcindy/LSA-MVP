@@ -121,23 +121,43 @@
         }
 
         function renderResources(data) {
-            if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;">目前無資源</td></tr>';
+            // 如果不是陣列或是空陣列，就顯示「沒有任何資源」
+            if (!Array.isArray(data) || data.length === 0) {
+                tbody.innerHTML = `
+            <tr>
+                <td colspan="4" style="text-align:center; color: #999;">
+                    目前沒有任何資源
+                </td>
+            </tr>
+        `;
                 return;
             }
+
+            // 清空表格內容
             tbody.innerHTML = '';
-            const vmName = data.name;
-            const statusRaw = data.status || 'unknown';
-            const status = statusRaw.toString().toLowerCase();
-            const statusClass = status === 'running' ? 'status-running' : (status === 'stopped' ? 'status-stopped' : '');
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${vmName}</td>
-                <td class="${statusClass}">${status}</td>
-                <td>${data.ssh}</td>
-                <td><button onclick="start()">啟動</button></td>`;
-            tbody.appendChild(row);
+
+            // 遍歷每個 VM 資料，渲染表格
+            for (const vm of data) {
+                const vmName = vm.name || '未命名';
+                const statusRaw = vm.status || 'unknown';
+                const sshCmd = vm.ssh || '-';
+
+                const status = statusRaw.toLowerCase();
+                const statusClass = status === 'running'
+                    ? 'status-running'
+                    : (status === 'stopped' ? 'status-stopped' : '');
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+            <td>${vmName}</td>
+            <td class="${statusClass}">${status}</td>
+            <td>${sshCmd}</td>
+            <td><button onclick="start()">啟動</button></td>
+        `;
+                tbody.appendChild(row);
+            }
         }
+
 
         loadResources();
 

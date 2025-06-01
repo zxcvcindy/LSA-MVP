@@ -83,20 +83,39 @@ def register_user(name: str, raw_password: str, email: str):
 
 
 # ---------- VM 相關（參考） ---------- #
-def create_vm(user_id: int, vm_name: str):
-    """建立 VM；vmid 自動從 100 起遞增。"""
+def create_vm(user_id: int):
     db, cursor = get_db()
+
+    # 查出使用者名稱
+    cursor.execute("SELECT name FROM users WHERE id = %s", (user_id,))
+    user = cursor.fetchone()
+    if not user:
+        raise ValueError("找不到使用者")
+
+    base_name = user["name"]
+
+    # 查出已有的同名 VM 數量
+    cursor.execute(
+        "SELECT COUNT(*) AS count FROM vms WHERE user_id = %s AND name LIKE %s",
+        (user_id, f"{base_name}-%",)
+    )
+    count = cursor.fetchone()["count"]
+
+    # 建立新 VM 名稱（例如：小明-1、小明-2）
+    vm_name = f"{base_name}-{count + 1}"
+
+    # 插入資料
     cursor.execute(
         "INSERT INTO vms (user_id, name) VALUES (%s, %s)",
         (user_id, vm_name),
     )
     db.commit()
     vmid = cursor.lastrowid
-    cursor.execute(
-        "SELECT vmid, user_id, name FROM vms WHERE vmid = %s",
-        (vmid,),
-    )
-    return cursor.fetchone()
+
+    return {
+        "vmid": vmid,
+        "vm_name": vm_name
+    }
 
 
 def list_vms(user_id: int):

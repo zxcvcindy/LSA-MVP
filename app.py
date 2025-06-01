@@ -42,11 +42,8 @@ def teardown_db(exception):
 # ---------------------------------------------------------------------------
 # Authentication
 # ---------------------------------------------------------------------------
-@app.route('/')
-def home():
-    return redirect('/login')
 
-@app.route('/login', methods=['GET'])
+@app.route('/', methods=['GET'])
 def login_page():
     return render_template('login.html')
 

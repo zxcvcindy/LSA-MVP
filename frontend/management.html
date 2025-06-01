@@ -175,6 +175,21 @@
             localStorage.removeItem('token');
             location.href = '/login';
         }
+        // async function start(vmid) {
+        //     try {
+        //         const res = await fetch(`${API_BASE}/vm/pve/${vmid}/start`, {
+        //             method: "POST",
+        //             headers: {
+        //                 'Content-Type': 'application/json',
+        //                 'Authorization': `Bearer ${token}`
+        //             }
+        //         });
+        //         if (!res.ok) throw new Error(res.statusText);
+        //         loadResources(); // 重新載入 VM 狀態
+        //     } catch (err) {
+        //         showError(err);
+        //     }
+        // }
         async function start(vmid) {
             try {
                 const res = await fetch(`${API_BASE}/vm/pve/${vmid}/start`, {

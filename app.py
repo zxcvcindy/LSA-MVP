@@ -202,18 +202,48 @@ def get_vm_info(node, vmid):
     """Return name, power state, and IPv6 for a single VM"""
     return jsonify(proxmox_api.get_vm_info(node, vmid))
 
+# @app.route("/myvms", methods=["GET"])
+# @jwt_required()
+# def list_my_vms():
+#     user_id = get_jwt_identity()
+#     # vmid = list_vms(user_id)["vmid"]  # 取得新 VM 的 ID
+#     result = proxmox_api.get_vm_info(node="pve", vmid= list_allvms(user_id)["vmid"] )
+
+#     if result and isinstance(result, dict):
+#         return jsonify([result])  # ✅ 包成 list
+#     else:
+#         return jsonify([])  # ✅ 回傳空陣列（前端就會顯示「目前無資源」）
+
 @app.route("/myvms", methods=["GET"])
 @jwt_required()
 def list_my_vms():
     user_id = get_jwt_identity()
-    # vmid = list_vms(user_id)["vmid"]  # 取得新 VM 的 ID
-    result = proxmox_api.get_vm_info(node="pve", vmid= list_allvms(user_id)["vmid"] )
 
-    if result and isinstance(result, dict):
-        return jsonify([result])  # ✅ 包成 list
-    else:
-        return jsonify([])  # ✅ 回傳空陣列（前端就會顯示「目前無資源」）
+    # 1) 先從本地 DB 撈出所有 vmid
+    local_vms = list_allvms(user_id)      # ⇢ list[dict]
 
+    if not local_vms:
+        return jsonify([])                # 使用者沒有任何 VM
+
+    vm_infos = []                         # 最後要回前端的陣列
+
+    # 2) 逐台去 Proxmox 拿即時 status / ip / mem …
+    for vm in local_vms:
+        vmid = int(vm["vmid"])
+        try:
+            info = proxmox_api.get_vm_info(node="pve", vmid=vmid)
+            if not info or not isinstance(info, dict):
+                continue                  # 取不到就跳過
+
+            # 你可以把 DB 的名稱覆蓋掉 PVE 回來的 name
+            info["name"] = vm["name"]
+            vm_infos.append(info)
+
+        except Exception as exc:
+            current_app.logger.error("get_vm_info(%s) failed: %s", vmid, exc)
+            # 照需求可把錯誤記下來或加到 vm_infos
+
+    return jsonify(vm_infos)
 
 
 # ---------------------------------------------------------------------------

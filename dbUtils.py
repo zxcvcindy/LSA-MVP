@@ -118,11 +118,20 @@ def create_vm(user_id: int):
     }
 
 
-def list_allvms(user_id: int):
-    """列出指定使用者的所有 VM。"""
-    _, cursor = get_db()
+def list_allvms(user_id: int) -> list[dict]:
+    """
+    從 DB 取出 user_id 擁有的所有 VM。
+    回傳格式範例：
+        [
+            {"id": 120, "name": "alice-120"},
+            {"id": 131, "name": "alice-131"},
+            ...
+        ]
+    """
+    db, cursor = get_db()
     cursor.execute(
         "SELECT id, name FROM vms WHERE user_id = %s ORDER BY id",
         (user_id,),
     )
-    return cursor.fetchall()
+    rows = cursor.fetchall()        # rows already list[dict] (because cursor=dict=True)
+    return rows

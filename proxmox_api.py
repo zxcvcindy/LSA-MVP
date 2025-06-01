@@ -1,4 +1,4 @@
-import time
+import time,re
 import requests
 import requests.packages.urllib3
 from typing import List, Dict
@@ -35,17 +35,17 @@ def stop_vm(node, vmid):
     response = requests.post(url, headers=HEADERS, verify=False)
     return response.json()
 
-def delete_vm(node, vmid):
-    url = f"{BASE_URL}/nodes/{node}/qemu/{vmid}"
-    response = requests.delete(url, headers=HEADERS, verify=False)
+# def delete_vm(node, vmid):
+#     url = f"{BASE_URL}/nodes/{node}/qemu/{vmid}"
+#     response = requests.delete(url, headers=HEADERS, verify=False)
 
-    if response.status_code == 200:
-        return {"data": response.text.strip()}
-    else:
-        return {
-            "error": f"Delete VM failed. Status {response.status_code}",
-            "details": response.text
-        }
+#     if response.status_code == 200:
+#         return {"data": response.text.strip()}
+#     else:
+#         return {
+#             "error": f"Delete VM failed. Status {response.status_code}",
+#             "details": response.text
+#         }
 
 def wait_for_task(node: str, upid: str, timeout: int = 600) -> None:
     """輪詢 Proxmox 任務直到完成；失敗時丟出例外。"""
@@ -258,3 +258,48 @@ def list_nodes() -> List[Dict]:
     r.raise_for_status()
     return r.json().get("data", [])
 
+_UPID_RE = re.compile(r"UPID:[^:]+:[0-9A-F]+:\w+")
+
+def _wait_task_ok(node: str, upid: str, timeout: int = 120, interval: int = 2):
+    """輪詢 task 狀態直到 exitstatus == OK；失敗就 raise。"""
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        url = f"{BASE_URL}/nodes/{node}/tasks/{upid}/status"
+        r = requests.get(url, headers=HEADERS, verify=False)
+        r.raise_for_status()
+        data = r.json()["data"]
+        if data["status"] == "stopped":
+            if data["exitstatus"] == "OK":
+                return
+            raise RuntimeError(f"Task failed: {data['exitstatus']}")
+        time.sleep(interval)
+    raise TimeoutError("PVE task timeout")
+
+
+def destroy_vm(node: str, vmid: int) -> str:
+    """送出刪除指令，回傳 UPID 字串。失敗 raise。"""
+    url = f"{BASE_URL}/nodes/{node}/qemu/{vmid}"
+    r = requests.delete(url, headers=HEADERS, verify=False)
+    r.raise_for_status()
+    txt = (r.json()["data"]               # 有時在 JSON
+           if r.headers.get("Content-Type", "").startswith("application/json")
+           else r.text.strip())           # 有時純文字
+    m = _UPID_RE.search(txt)
+    if not m:
+        raise RuntimeError(f"Cannot parse UPID from response: {txt}")
+    return m.group(0)
+
+def delete_vm(node: str, vmid: int, timeout: int = 120) -> dict:
+    """
+    刪除一台 VM（停機→destroy→等待任務成功）
+    回傳：
+        {"ok": True,  "upid": "..."}  或
+        {"ok": False, "error": "..."}
+    """
+    try:
+        stop_vm(node, vmid)                 # 1) 關機（若已關閉視為成功）
+        upid = destroy_vm(node, vmid)            # 2) 送刪除取得 UPID
+        _wait_task_ok(node, upid, timeout)       # 3) 等任務完成
+        return {"ok": True, "upid": upid}
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}

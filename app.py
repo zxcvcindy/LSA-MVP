@@ -178,7 +178,6 @@ def get_vm_ssh6(node, vmid):
 # def delete_vm(node, vmid):
 #     return jsonify(proxmox_api.delete_vm(node, vmid))
 # 刪除 VM ── 用 POST 方法
-# app.py 片段
 
 @app.route('/vm/<node>/<int:vmid>/delete', methods=['POST', 'OPTIONS'])
 @jwt_required()
@@ -197,14 +196,14 @@ def delete_vm(node, vmid):
     current_app.logger.warning(">>> user %s req DEL vm %s", user_id, vmid)
 
     try:
-        # 1) 停機（若已關機會回 400 → stop_vm_safe 內部忽略）
+        # 1) 停機（若已關機會回 400 → stop_vm 內部忽略）
         proxmox_api.stop_vm(node, vmid)
 
         # 2) 刪除，取得 UPID
         upid = proxmox_api.destroy_vm(node, vmid)  # e.g. "UPID:..."
 
         # 3) 等待任務完成
-        proxmox_api.wait_task_ok(node, upid, timeout=120)
+        proxmox_api._wait_task_ok(node, upid, timeout=120)
 
         # 4) 刪除資料庫紀錄
         delete_vm(user_id, vmid)
@@ -216,7 +215,7 @@ def delete_vm(node, vmid):
         db.rollback()
         current_app.logger.error("DELETE VM %s failed: %s", vmid, e)
         return jsonify({"ok": False, "error": str(e)}), 500
-    
+
 @app.route('/vm/<node>/<int:vmid>/restart', methods=['POST'])
 @jwt_required()
 def restart_vm(node, vmid):

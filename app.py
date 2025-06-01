@@ -229,7 +229,7 @@ def list_my_vms():
 
     # 2) 逐台去 Proxmox 拿即時 status / ip / mem …
     for vm in local_vms:
-        vmid = int(vm["vmid"])
+        vmid = int(vm["id"])
         try:
             info = proxmox_api.get_vm_info(node="pve", vmid=vmid)
             if not info or not isinstance(info, dict):

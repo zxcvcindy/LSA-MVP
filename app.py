@@ -136,11 +136,11 @@ def list_user_vm_api():
 @jwt_required()
 def create_user_vm_api():
     user_id = get_jwt_identity()   # 目前登入者的帳號
-    vmid = create_vm(vmid)  
+    vmid = create_vm(user_id)["vmid"]  # 建立 VM 時的 VM ID
     data = request.get_json()
 
     new_vmid  = vmid
-    vm_name   = f"vm-{create_vm(vm_name)}"
+    vm_name   = f"vm-{create_vm(user_id)["vm_name"]}"  # 取得 VM 名稱
     password  = data.get("password","1234")
 
     # 1. 建 VM

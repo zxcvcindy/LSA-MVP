@@ -96,11 +96,17 @@ def logout():
 # ---------------------------------------------------------------------------
 
 
-@app.route('/myvm/start', methods=['POST'])
+# @app.route('/myvm/start', methods=['POST'])
+# @jwt_required()
+# def start_vm():
+#     user_id = get_jwt_identity() 
+#     return jsonify(proxmox_api.start_vm("pve", user_id))
+# 啟動 VM --------------------------------------------------------
+@app.route('/vm/<node>/<int:vmid>/start', methods=['POST', 'OPTIONS'])
 @jwt_required()
-def start_vm():
-    user_id = get_jwt_identity() 
-    return jsonify(proxmox_api.start_vm("pve", user_id))
+def start_vm(node, vmid):
+    """POST /vm/pve/122/start  →  啟動 VM 122"""
+    return jsonify(proxmox_api.start_vm(node, vmid))
 
 
 @app.route('/vm/<node>/<int:vmid>/stop', methods=['POST'])
@@ -202,17 +208,6 @@ def get_vm_info(node, vmid):
     """Return name, power state, and IPv6 for a single VM"""
     return jsonify(proxmox_api.get_vm_info(node, vmid))
 
-# @app.route("/myvms", methods=["GET"])
-# @jwt_required()
-# def list_my_vms():
-#     user_id = get_jwt_identity()
-#     # vmid = list_vms(user_id)["vmid"]  # 取得新 VM 的 ID
-#     result = proxmox_api.get_vm_info(node="pve", vmid= list_allvms(user_id)["vmid"] )
-
-#     if result and isinstance(result, dict):
-#         return jsonify([result])  # ✅ 包成 list
-#     else:
-#         return jsonify([])  # ✅ 回傳空陣列（前端就會顯示「目前無資源」）
 
 @app.route("/myvms", methods=["GET"])
 @jwt_required()

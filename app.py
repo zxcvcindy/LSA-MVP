@@ -43,7 +43,7 @@ def teardown_db(exception):
 # Authentication
 # ---------------------------------------------------------------------------
 
-@app.route('/', methods=['GET'])
+@app.route('/login', methods=['GET'])
 def login_page():
     return render_template('login.html')
 

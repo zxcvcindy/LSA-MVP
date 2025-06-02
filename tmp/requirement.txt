@@ -1,5 +1,0 @@
-Flask
-requests
-Flask-JWT-Extended
-mysql-connector-python
-Flask-Cors

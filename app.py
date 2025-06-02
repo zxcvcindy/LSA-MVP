@@ -212,12 +212,12 @@ def delete_vm(node, vmid):
     result = proxmox_api.delete_vm(node, vmid)
 
     if result.get("ok"):
-        db_delete_vm(user_id, vmid)  # <-- 這裡改掉
+        db_delete_vm(user_id, id)  # <-- 這裡改掉
         db.commit()
         return jsonify({"ok": True}), 200
 
     db.rollback()
-    current_app.logger.error("DELETE VM %s failed: %s", vmid, result.get("error"))
+    current_app.logger.error("DELETE VM %s failed: %s", id, result.get("error"))
     return jsonify({"ok": False, "error": result.get("error", "Unknown")}), 500
 
 @app.route("/vm/<node>/<int:vmid>/restart", methods=["POST"])

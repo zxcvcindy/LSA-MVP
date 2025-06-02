@@ -4,194 +4,685 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VM 管理介面</title>
+    <title>PVE Pixie - VM 管理介面</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: Arial, Helvetica, sans-serif;
-            padding: 30px;
-            background: #f8f8f8
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+            overflow-x: hidden;
+            position: relative;
         }
 
-        h2 {
+        /* 科技感背景動畫 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(0, 123, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 191, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(0, 123, 255, 0.05) 0%, transparent 50%);
+            animation: backgroundPulse 8s ease-in-out infinite alternate;
+            z-index: -1;
+        }
+
+        @keyframes backgroundPulse {
+            0% {
+                opacity: 0.3;
+            }
+
+            100% {
+                opacity: 0.7;
+            }
+        }
+
+        /* 網格背景 */
+        .grid-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(0, 123, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 123, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: -1;
+            opacity: 0.4;
+        }
+
+        /* 導航欄 */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 2rem;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(71, 85, 105, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #00bfff, #007bff);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(0, 123, 255, 0.5);
+        }
+
+        .logo-icon::before {
+            content: 'P';
+            color: white;
+            font-weight: 800;
+            font-size: 1.5rem;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00bfff, #007bff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        /* 主要內容區域 */
+        .main-content {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
             text-align: center;
-            margin-bottom: 20px
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, #ffffff 0%, #94a3b8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
-        table {
-            width: 60%;
-            min-width: 320px;
-            margin: auto;
-            border-collapse: collapse;
-            background: #fff;
-            box-shadow: 0 0 8px rgba(0, 0, 0, .1)
+        /* 操作按鈕區域 */
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
-        th,
-        td {
-            padding: 12px;
-            border: 1px solid #ddd;
-            text-align: center
+        .btn {
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 600;
+            letter-spacing: 0.025em;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 123, 255, 0.3);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        th {
-            background: #4CAF50;
-            color: #fff
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 123, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(71, 85, 105, 0.8);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(51, 65, 85, 0.9);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            box-shadow: 0 5px 15px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            box-shadow: 0 5px 15px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-warning:hover {
+            background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4);
+        }
+
+        /* VM 卡片容器 */
+        .vm-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .vm-card {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(71, 85, 105, 0.3);
+            border-radius: 16px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .vm-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #007bff, #00bfff);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.5s ease;
+        }
+
+        .vm-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            border-color: rgba(0, 123, 255, 0.5);
+        }
+
+        .vm-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .vm-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .vm-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .vm-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
         }
 
         .status-running {
-            color: #27ae60;
-            font-weight: bold
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
         .status-stopped {
-            color: #e74c3c;
-            font-weight: bold
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
         }
 
-        .refresh {
+        .vm-info {
+            margin-bottom: 1.5rem;
+        }
+
+        .vm-ssh {
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            border-radius: 8px;
+            padding: 0.75rem;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            word-break: break-all;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .vm-ssh:hover {
+            background: rgba(51, 65, 85, 0.8);
+            color: #e2e8f0;
+        }
+
+        .vm-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .vm-actions .btn {
+            flex: 1;
+            min-width: 60px;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        /* 空狀態 */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(71, 85, 105, 0.3);
+            border-radius: 16px;
+            margin: 2rem 0;
+        }
+
+        .empty-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            background: linear-gradient(135deg, rgba(71, 85, 105, 0.3) 0%, rgba(51, 65, 85, 0.3) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: #64748b;
+        }
+
+        .empty-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-desc {
+            color: #64748b;
+            margin-bottom: 2rem;
+        }
+
+        /* 載入狀態 */
+        .loading-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(71, 85, 105, 0.3);
+            border-radius: 16px;
+            margin: 2rem 0;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            margin: 0 auto 1rem;
+            border: 3px solid rgba(71, 85, 105, 0.3);
+            border-top: 3px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 重新整理按鈕 */
+        .refresh-btn {
             position: fixed;
-            right: 30px;
-            bottom: 30px;
+            bottom: 2rem;
+            right: 2rem;
             width: 56px;
             height: 56px;
             border-radius: 50%;
-            background: #4CAF50;
-            color: #fff;
-            font-size: 24px;
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: #ffffff;
             border: none;
             cursor: pointer;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, .3)
+            font-size: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 123, 255, 0.4);
+            transition: all 0.3s ease;
+            z-index: 50;
         }
 
-        .create {
-            background: #3498db;
-            color: #fff;
-            padding: 10px 16px;
-            margin-bottom: 16px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer
+        .refresh-btn:hover {
+            transform: translateY(-3px) rotate(180deg);
+            box-shadow: 0 15px 35px rgba(0, 123, 255, 0.5);
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 1rem;
+            }
+
+            .vm-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .navbar {
+                padding: 1rem;
+            }
+
+            .logo-text {
+                font-size: 1.25rem;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .vm-actions {
+                flex-direction: column;
+            }
+
+            .vm-actions .btn {
+                flex: none;
+            }
+        }
+
+        /* 通知樣式 */
+        .notification {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(71, 85, 105, 0.3);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            color: #e2e8f0;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+            max-width: 300px;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .notification.success {
+            border-color: rgba(16, 185, 129, 0.3);
+            background: rgba(15, 23, 42, 0.95);
+        }
+
+        .notification.error {
+            border-color: rgba(239, 68, 68, 0.3);
+            background: rgba(15, 23, 42, 0.95);
         }
     </style>
 </head>
 
 <body>
-    <h2>我的資源管理</h2>
+    <!-- 背景網格 -->
+    <div class="grid-bg"></div>
 
-    <div style="width:60%;min-width:320px;margin:auto;text-align:right">
-        <button class="create" onclick="window.location='/create'">＋ 建立新資源</button>
-        <button class="logout" onclick="logout()"> 登出</button>
+    <!-- 導航欄 -->
+    <nav class="navbar">
+        <div class="logo">
+            <div class="logo-icon"></div>
+            <div class="logo-text">PVE Pixie</div>
+        </div>
+        <div class="nav-actions">
+            <button class="btn btn-secondary" onclick="logout()">登出</button>
+        </div>
+    </nav>
 
-    </div>
+    <!-- 主要內容 -->
+    <main class="main-content">
+        <h1 class="page-title">我的資源管理</h1>
 
-    <table id="resourceTable">
-        <thead>
-            <tr>
-                <th>VM 名稱</th>
-                <th>狀態</th>
-                <th>SSH 指令</th>
-                <th>操作</th>
-            </tr>
-        </thead>
-        <tbody></tbody>
-    </table>
+        <!-- 操作按鈕區域 -->
+        <div class="action-bar">
+            <div>
+                <button class="btn" onclick="window.location='/create'">
+                    ➕ 建立新資源
+                </button>
+            </div>
+            <div>
+                <span id="vmCount" style="color: #94a3b8; font-size: 0.875rem;"></span>
+            </div>
+        </div>
 
-    <button class="refresh" title="重新整理" onclick="loadResources()">⟳</button>
+        <!-- VM 列表 -->
+        <div id="vmContainer">
+            <!-- 載入狀態 -->
+            <div class="loading-state" id="loadingState">
+                <div class="loading-spinner"></div>
+                <p>載入中...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- 重新整理按鈕 -->
+    <button class="refresh-btn" title="重新整理" onclick="loadResources()">⟳</button>
+
+    <!-- 通知容器 -->
+    <div id="notification" class="notification"></div>
 
     <script>
         const API_BASE = 'http://157.230.41.208:5002';
         const token = localStorage.getItem('token');
         if (!token) { location.href = '/login'; }
 
-        const tbody = document.querySelector('#resourceTable tbody'); // 找到表格的 tbody 元素，用來動態插入資料列
+        const vmContainer = document.getElementById('vmContainer');
+        const loadingState = document.getElementById('loadingState');
+        const vmCount = document.getElementById('vmCount');
+
+        // 顯示通知
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // 複製SSH指令
+        function copySSH(sshCmd) {
+            navigator.clipboard.writeText(sshCmd).then(() => {
+                showNotification('SSH 指令已複製到剪貼板', 'success');
+            }).catch(() => {
+                showNotification('複製失敗', 'error');
+            });
+        }
 
         async function loadResources() {
-            tbody.innerHTML = '<tr><td colspan="2" style="text-align:center;">載入中...</td></tr>';
+            loadingState.style.display = 'block';
+            vmContainer.innerHTML = '';
+            vmContainer.appendChild(loadingState);
+
             try {
                 const res = await fetch(`${API_BASE}/myvms`, {
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    }
                 });
-                if (!res.ok) { throw new Error(res.statusText); }
+
+                if (!res.ok) {
+                    throw new Error(res.statusText);
+                }
+
                 const raw = await res.json();
                 renderResources(raw);
             } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;color:#e74c3c;">載入失敗：${err.message}</td></tr>`;
+                vmContainer.innerHTML = `
+        <div class="empty-state">
+            <div class="empty-icon">❌</div>
+            <div class="empty-title">載入失敗</div>
+            <div class="empty-desc">${err.message}</div>
+            <button class="btn" onclick="loadResources()">重試</button>
+        </div>
+        `;
                 console.error(err);
+                showNotification('載入失敗：' + err.message, 'error');
             }
         }
 
         function renderResources(data) {
-            // 如果不是陣列或是空陣列，就顯示「目前沒有任何資源」
+            loadingState.style.display = 'none';
+
+            // 如果不是陣列或是空陣列，就顯示空狀態
             if (!Array.isArray(data) || data.length === 0) {
-                tbody.innerHTML = `
-            <tr>
-                <td colspan="4" style="text-align:center; color: #999;">
-                    目前沒有任何資源
-                </td>
-            </tr>
+                vmContainer.innerHTML = `
+        <div class="empty-state">
+            <div class="empty-icon">🖥️</div>
+            <div class="empty-title">目前沒有任何資源</div>
+            <div class="empty-desc">點擊上方按鈕建立您的第一個虛擬機</div>
+            <button class="btn" onclick="window.location='/create'">
+            ➕ 建立新資源
+            </button>
+        </div>
         `;
+                vmCount.textContent = '';
                 return;
             }
 
-            // 清空表格內容
-            tbody.innerHTML = '';
+            // 過濾有效的VM資料
+            const validVMs = data.filter(vm => vm && vm.vmid && vm.status);
+            vmCount.textContent = `共 ${validVMs.length} 個虛擬機`;
 
-            // 遍歷每個 VM 資料，渲染表格
-            for (const vm of data) {
-                // ✅ 跳過「沒有 vmid 或狀態」的空資料
-                if (!vm || !vm.vmid || !vm.status) continue;
+            // 創建VM網格
+            const vmGrid = document.createElement('div');
+            vmGrid.className = 'vm-grid';
 
-                const vmName = vm.name || '未命名';
+            // 遍歷每個 VM 資料，渲染卡片
+            for (const vm of validVMs) {
+                const vmName = vm.name || `VM-${vm.vmid}`;
                 const statusRaw = vm.status || 'unknown';
                 const sshCmd = vm.ssh || '-';
                 const vmid = vm.vmid;
 
                 const status = statusRaw.toLowerCase();
-                const statusClass = status === 'running'
-                    ? 'status-running'
-                    : (status === 'stopped' ? 'status-stopped' : '');
+                const statusClass = status === 'running' ? 'status-running' : 'status-stopped';
 
-                const row = document.createElement('tr');
-                row.innerHTML = `
-            <td>${vmName}</td>
-            <td class="${statusClass}">${status}</td>
-            <td>${sshCmd}</td>
-            <td>
-                <button onclick="start(${vmid})">啟動</button>
-                <button onclick="stop(${vmid})">停止</button>
-                <button onclick="restart(${vmid})">重啟</button>
-                <button onclick="deleteVM(${vmid})">刪除</button>
-            </td>
+                const vmCard = document.createElement('div');
+                vmCard.className = 'vm-card';
+                vmCard.innerHTML = `
+          <div class="vm-header">
+            <div class="vm-name">${vmName}</div>
+            <div class="vm-status ${statusClass}">${status}</div>
+          </div>
+          <div class="vm-info">
+            <div class="vm-ssh" onclick="copySSH('${sshCmd}')" title="點擊複製">
+              ${sshCmd}
+            </div>
+          </div>
+          <div class="vm-actions">
+            <button class="btn btn-success" onclick="start(${vmid})" ${status === 'running' ? 'disabled' : ''}>
+              ▶️ 啟動
+            </button>
+            <button class="btn btn-warning" onclick="restart(${vmid})" ${status !== 'running' ? 'disabled' : ''}>
+              🔄 重啟
+            </button>
+            <button class="btn btn-secondary" onclick="stop(${vmid})" ${status !== 'running' ? 'disabled' : ''}>
+              ⏹️ 停止
+            </button>
+            <button class="btn btn-danger" onclick="deleteVM(${vmid})">
+              🗑️ 刪除
+            </button>
+          </div>
         `;
-                tbody.appendChild(row);
+                vmGrid.appendChild(vmCard);
             }
+
+            vmContainer.appendChild(vmGrid);
         }
 
-
-
-        loadResources();
-
-        function logout() {
-            localStorage.removeItem('token');
-            location.href = '/login';
-        }
-        // async function start(vmid) {
-        //     try {
-        //         const res = await fetch(`${API_BASE}/vm/pve/${vmid}/start`, {
-        //             method: "POST",
-        //             headers: {
-        //                 'Content-Type': 'application/json',
-        //                 'Authorization': `Bearer ${token}`
-        //             }
-        //         });
-        //         if (!res.ok) throw new Error(res.statusText);
-        //         loadResources(); // 重新載入 VM 狀態
-        //     } catch (err) {
-        //         showError(err);
-        //     }
-        // }
+        // VM 操作函數
         async function start(vmid) {
             try {
+                showNotification('正在啟動虛擬機...', 'info');
                 const res = await fetch(`${API_BASE}/vm/pve/${vmid}/start`, {
                     method: "POST",
                     headers: {
@@ -200,14 +691,16 @@
                     }
                 });
                 if (!res.ok) throw new Error(res.statusText);
-                loadResources(); // 重新載入 VM 狀態
+                showNotification('虛擬機啟動成功', 'success');
+                loadResources();
             } catch (err) {
-                showError(err);
+                showNotification('啟動失敗：' + err.message, 'error');
             }
         }
 
         async function stop(vmid) {
             try {
+                showNotification('正在停止虛擬機...', 'info');
                 const res = await fetch(`${API_BASE}/vm/pve/${vmid}/stop`, {
                     method: "POST",
                     headers: {
@@ -216,14 +709,16 @@
                     }
                 });
                 if (!res.ok) throw new Error(res.statusText);
+                showNotification('虛擬機停止成功', 'success');
                 loadResources();
             } catch (err) {
-                showError(err);
+                showNotification('停止失敗：' + err.message, 'error');
             }
         }
 
         async function restart(vmid) {
             try {
+                showNotification('正在重啟虛擬機...', 'info');
                 const res = await fetch(`${API_BASE}/vm/pve/${vmid}/restart`, {
                     method: "POST",
                     headers: {
@@ -232,31 +727,18 @@
                     }
                 });
                 if (!res.ok) throw new Error(res.statusText);
+                showNotification('虛擬機重啟成功', 'success');
                 loadResources();
             } catch (err) {
-                showError(err);
+                showNotification('重啟失敗：' + err.message, 'error');
             }
         }
 
-        // async function deletevm(vmid) {
-        //     try {
-        //         const res = await fetch(`${API_BASE}/vm/pve/${vmid}`, {
-        //             method: "DELETE",
-        //             headers: {
-        //                 'Content-Type': 'application/json',
-        //                 'Authorization': `Bearer ${token}`
-        //             }
-        //         });
-        //         if (!res.ok) throw new Error(res.statusText);
-        //         loadResources();
-        //     } catch (err) {
-        //         showError(err);
-        //     }
-        // }
         async function deleteVM(vmid) {
-            if (!confirm(`確定刪除 VM ${vmid}？`)) return;
+            if (!confirm(`確定刪除 VM ${vmid}？此操作無法復原！`)) return;
 
             try {
+                showNotification('正在刪除虛擬機...', 'info');
                 const res = await fetch(`${API_BASE}/vm/pve/${vmid}/delete`, {
                     method: "POST",
                     headers: { Authorization: `Bearer ${token}` }
@@ -265,14 +747,20 @@
 
                 if (!res.ok || !body.ok) throw new Error(body.error || res.statusText);
 
-                loadResources();                  // 真的刪掉才刷新
+                showNotification('虛擬機刪除成功', 'success');
+                loadResources();
             } catch (err) {
-                alert("刪除失敗：" + err.message);
+                showNotification('刪除失敗：' + err.message, 'error');
             }
         }
 
+        function logout() {
+            localStorage.removeItem('token');
+            location.href = '/login';
+        }
 
-
+        // 初始載入
+        loadResources();
     </script>
 </body>
 

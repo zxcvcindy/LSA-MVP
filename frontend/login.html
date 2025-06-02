@@ -4,87 +4,363 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>使用者登入</title>
+  <title>PVE Pixie - 使用者登入</title>
   <style>
-    body {
-      font-family: Arial, Helvetica, sans-serif;
-      background: #f8f8f8;
-      padding: 30px;
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
     }
 
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* 科技感背景動畫 */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background:
+        radial-gradient(circle at 20% 80%, rgba(0, 123, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(0, 191, 255, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(0, 123, 255, 0.05) 0%, transparent 50%);
+      animation: backgroundPulse 8s ease-in-out infinite alternate;
+      z-index: -1;
+    }
+
+    @keyframes backgroundPulse {
+      0% {
+        opacity: 0.3;
+      }
+
+      100% {
+        opacity: 0.7;
+      }
+    }
+
+    /* 主標題 */
+    .main-title {
+      color: #ffffff;
+      font-size: 3rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 2rem;
+      background: linear-gradient(135deg, #00bfff, #007bff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: 0 0 30px rgba(0, 191, 255, 0.3);
+      animation: titleGlow 3s ease-in-out infinite alternate;
+    }
+
+    @keyframes titleGlow {
+      0% {
+        filter: brightness(1);
+      }
+
+      100% {
+        filter: brightness(1.2);
+      }
+    }
+
+    /* 登入卡片 */
     .card {
-      background: #fff;
-      padding: 24px 32px;
+      background: rgba(15, 23, 42, 0.9);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(0, 191, 255, 0.2);
+      padding: 2.5rem;
       max-width: 420px;
-      margin: auto;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, .08);
+      width: 100%;
+      border-radius: 20px;
+      box-shadow:
+        0 25px 50px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+      animation: cardFloat 6s ease-in-out infinite;
+    }
+
+    @keyframes cardFloat {
+
+      0%,
+      100% {
+        transform: translateY(0px);
+      }
+
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+
+    /* 卡片發光邊框效果 */
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 20px;
+      padding: 2px;
+      background: linear-gradient(45deg, #007bff, #00bfff, #007bff);
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask-composite: exclude;
+      opacity: 0.6;
+      animation: borderGlow 3s linear infinite;
+    }
+
+    @keyframes borderGlow {
+      0% {
+        opacity: 0.3;
+      }
+
+      50% {
+        opacity: 0.8;
+      }
+
+      100% {
+        opacity: 0.3;
+      }
+    }
+
+    .card-content {
+      position: relative;
+      z-index: 1;
     }
 
     h2 {
+      color: #ffffff;
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 2rem;
+      font-size: 1.75rem;
+      font-weight: 600;
+      letter-spacing: -0.025em;
+    }
+
+    /* 輸入框樣式 */
+    .input-group {
+      margin-bottom: 1.5rem;
+      position: relative;
     }
 
     label {
       display: block;
-      margin-top: 14px;
+      color: #94a3b8;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.025em;
     }
 
     input {
       width: 100%;
-      padding: 10px;
-      margin-top: 6px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      box-sizing: border-box;
+      padding: 1rem 1.25rem;
+      background: rgba(30, 41, 59, 0.8);
+      border: 1px solid rgba(71, 85, 105, 0.5);
+      border-radius: 12px;
+      color: #ffffff;
+      font-size: 1rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      backdrop-filter: blur(10px);
     }
 
-    button {
+    input:focus {
+      outline: none;
+      border-color: #007bff;
+      box-shadow:
+        0 0 0 3px rgba(0, 123, 255, 0.1),
+        0 0 20px rgba(0, 123, 255, 0.2);
+      background: rgba(30, 41, 59, 0.95);
+      transform: translateY(-2px);
+    }
+
+    input::placeholder {
+      color: #64748b;
+    }
+
+    /* 按鈕樣式 */
+    .btn {
       width: 100%;
-      padding: 12px;
-      margin-top: 24px;
-      background: #2196f3;
-      color: #fff;
+      padding: 1rem 1.5rem;
+      background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+      color: #ffffff;
       border: none;
-      border-radius: 6px;
+      border-radius: 12px;
       cursor: pointer;
       font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.025em;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      box-shadow:
+        0 10px 25px rgba(0, 123, 255, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
     }
 
-    button:hover {
-      background: #1976d2;
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
     }
 
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .btn:hover {
+      background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+      transform: translateY(-2px);
+      box-shadow:
+        0 15px 35px rgba(0, 123, 255, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: linear-gradient(135deg, rgba(71, 85, 105, 0.8) 0%, rgba(51, 65, 85, 0.8) 100%);
+      margin-top: 1rem;
+      box-shadow:
+        0 10px 25px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-secondary:hover {
+      background: linear-gradient(135deg, rgba(51, 65, 85, 0.9) 0%, rgba(30, 41, 59, 0.9) 100%);
+      box-shadow:
+        0 15px 35px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    /* 錯誤訊息 */
     .error {
-      color: #e74c3c;
-      margin-top: 8px;
-      font-size: .9rem;
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      margin: 1rem 0;
       display: none;
+      animation: errorShake 0.5s ease-in-out;
+    }
+
+    @keyframes errorShake {
+
+      0%,
+      100% {
+        transform: translateX(0);
+      }
+
+      25% {
+        transform: translateX(-5px);
+      }
+
+      75% {
+        transform: translateX(5px);
+      }
+    }
+
+    /* 響應式設計 */
+    @media (max-width: 480px) {
+      .main-title {
+        font-size: 2rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .card {
+        padding: 2rem 1.5rem;
+        margin: 1rem;
+      }
+
+      body {
+        padding: 10px;
+      }
+    }
+
+    /* 載入動畫 */
+    .loading {
+      opacity: 0.7;
+      pointer-events: none;
+    }
+
+    .loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      margin: -10px 0 0 -10px;
+      border: 2px solid transparent;
+      border-top: 2px solid #007bff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
     }
   </style>
 </head>
 
 <body>
-  <h1>PVE Pixie </h1>
+  <h1 class="main-title">PVE Pixie</h1>
+
   <div class="card">
+    <div class="card-content">
+      <h2>使用者登入</h2>
 
-    <h2>使用者登入</h2>
+      <div class="input-group">
+        <label for="userid">使用者 ID</label>
+        <input id="userid" name="username" placeholder="請輸入您的使用者 ID" required>
+      </div>
 
-    <label for="userid">使用者 ID：</label>
-    <input id="userid" name="username" required>
+      <div class="input-group">
+        <label for="password">密碼</label>
+        <input id="password" type="password" name="password" placeholder="請輸入您的密碼" minlength="6" required>
+      </div>
 
-    <label for="password">密碼：</label>
-    <input id="password" type="password" name="password" minlength="6" required>
+      <div id="loginErr" class="error">登入失敗，請再次確認！</div>
 
-    <div id="loginErr" class="error">登入失敗，請再次確認！</div>
+      <button id="loginBtn" class="btn" onclick="login()" type="button">
+        登入
+      </button>
 
-    <button onclick="login()" type="button">登入</button>
-
-    <a href="/register">
-      <button>前往註冊頁面</button>
-    </a>
-
+      <a href="/register" style="text-decoration: none;">
+        <button class="btn btn-secondary" type="button">前往註冊頁面</button>
+      </a>
+    </div>
   </div>
 
   <script>
@@ -92,6 +368,7 @@
     const userid = document.getElementById('userid');
     const pwd = document.getElementById('password');
     const loginErr = document.getElementById('loginErr');
+    const loginBtn = document.getElementById('loginBtn');
 
     // API base url
     const API_BASE = 'http://157.230.41.208:5002';
@@ -101,33 +378,73 @@
       // 清除錯誤訊息
       loginErr.style.display = 'none';
 
-      // 送出登入請求
-      const res = await fetch(`${API_BASE}/login`, {
-        mode: 'cors',
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          username: userid.value.trim(),
-          password: pwd.value
-        })
-      });
+      // 添加載入狀態
+      loginBtn.classList.add('loading');
+      loginBtn.textContent = '登入中...';
 
-      if (res.ok) {
-        // 若後端回傳 token，可存到 localStorage
-        const data = await res.json().catch(() => ({}));
-        console.log('登入成功，token:', data);
-        if (data["access_token"]) {
-          localStorage.setItem('token', data["access_token"]);
+      try {
+        // 送出登入請求
+        const res = await fetch(`${API_BASE}/login`, {
+          mode: 'cors',
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: userid.value.trim(),
+            password: pwd.value
+          })
+        });
+
+        if (res.ok) {
+          // 若後端回傳 token，可存到 localStorage
+          const data = await res.json().catch(() => ({}));
+          console.log('登入成功，token:', data);
+          if (data["access_token"]) {
+            localStorage.setItem('token', data["access_token"]);
+          }
+
+          // 成功動畫
+          loginBtn.textContent = '登入成功！';
+          loginBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+
+          setTimeout(() => {
+            // 登入後導向使用者首頁或儀表板
+            location.href = '/management';
+          }, 1000);
+        } else {
+          const data = await res.json().catch(() => ({}));
+          loginErr.textContent = '登入失敗：' + (data.msg || res.statusText);
+          loginErr.style.display = 'block';
         }
-        alert('登入成功！');
-        // 登入後導向使用者首頁或儀表板
-        location.href = '/management';
-      } else {
-        const data = await res.json().catch(() => ({}));
-        loginErr.textContent = '登入失敗：' + (data.msg || res.statusText);
+      } catch (error) {
+        loginErr.textContent = '網路連線錯誤，請稍後再試';
         loginErr.style.display = 'block';
+      } finally {
+        // 移除載入狀態
+        loginBtn.classList.remove('loading');
+        if (loginBtn.textContent === '登入中...') {
+          loginBtn.textContent = '登入';
+        }
       }
     }
+
+    // Enter 鍵登入
+    document.addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        login();
+      }
+    });
+
+    // 輸入框焦點效果
+    const inputs = document.querySelectorAll('input');
+    inputs.forEach(input => {
+      input.addEventListener('focus', function () {
+        this.parentElement.style.transform = 'translateY(-2px)';
+      });
+
+      input.addEventListener('blur', function () {
+        this.parentElement.style.transform = 'translateY(0)';
+      });
+    });
   </script>
 
 </body>

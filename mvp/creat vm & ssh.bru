@@ -1,0 +1,23 @@
+meta {
+  name: creat vm & ssh
+  type: http
+  seq: 14
+}
+
+post {
+  url: http://localhost:5002/user-vm/create
+  body: json
+  auth: none
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc0ODQzMTYwMiwianRpIjoiZjgzYWY0M2MtMDZlNy00MWM4LWE3YmItODk1YTJkNTdlNzY4IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6InMxMTEyMTMwMzMiLCJuYmYiOjE3NDg0MzE2MDIsImNzcmYiOiIzZDU3NDhiMy02MDg1LTRmZjctOWI0ZC0wNDU2NTA3NWRhZDQiLCJleHAiOjE3NDg0MzI1MDJ9.4NnDZ53PRa0NCFv1FscTj3o4FkW4y8SZjHvkTgMBCDA
+}
+
+body:json {
+  {
+    "vmid":"s111213033",
+    "password": "123123123"
+  }
+  
+}

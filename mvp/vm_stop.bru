@@ -1,0 +1,15 @@
+meta {
+  name: vm_stop
+  type: http
+  seq: 6
+}
+
+post {
+  url: https://10.32.1.100:8006/api2/json/nodes/pve/qemu/101/status/stop
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: PVEAPIToken=root@pam!LSAlab=c9bc7679-c908-48f1-957c-17addd105dae
+}

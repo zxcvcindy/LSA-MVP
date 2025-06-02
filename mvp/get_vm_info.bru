@@ -1,0 +1,15 @@
+meta {
+  name: get_vm_info
+  type: http
+  seq: 18
+}
+
+get {
+  url: localhost://5002/{{base_url}}/vm/{{node}}/{{vmid}}/info
+  body: none
+  auth: inherit
+}
+
+headers {
+  Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTc0ODQzMTg5OSwianRpIjoiYmMzOWQwY2ItYzJjOS00ZWVjLTk3MDktMzRkN2VhYjlmZmQ0IiwidHlwZSI6ImFjY2VzcyIsInN1YiI6InMxMTEyMTMwMjIiLCJuYmYiOjE3NDg0MzE4OTksImNzcmYiOiI2Y2QwYmJhZS0yMmU0LTQ0NjItODkzZi0yM2Q0NzNiNmExNmQiLCJleHAiOjE3NDg0MzI3OTl9.MAA5B_cgyMPLdR6H_rWeq5SvGAMGzzMdmAL4q5qVBcQ
+}

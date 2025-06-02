@@ -147,9 +147,9 @@ def delete_vm(user_id: int, vmid: int):
     # Step 1: 刪除 Proxmox 上的 VM
     try:
         from proxmox_api import delete_vm as proxmox_delete_vm
-        upid = proxmox_delete_vm(node="pve", vmid=vmid)  # 假設 node 名稱為 pve
+        upid = proxmox_delete_vm(node="pve", vmid=vmid)
     except Exception as e:
-        current_app.logger.error("Failed to delete VM %s: %s", id, e)
+        current_app.logger.error("Failed to delete VM %s: %s", vmid, e)
         return {"ok": False, "error": str(e)}, 500
 
     # Step 2: 等待 Proxmox 任務完成
@@ -162,11 +162,11 @@ def delete_vm(user_id: int, vmid: int):
 
     # Step 3: 刪除本地 DB 紀錄
     try:
-        #cursor.execute("DELETE FROM vms WHERE vmid = %s AND user_id = %s", (vmid, user_id))
         cursor.execute("DELETE FROM vms WHERE id = %s AND user_id = %s", (vmid, user_id))
         db.commit()
         return {"ok": True}, 200
     except Exception as e:
         db.rollback()
         current_app.logger.error("Failed to delete VM %s from DB: %s", vmid, e)
-        return {"ok": False, "error": str(e)}, 500          
+        return {"ok": False, "error": str(e)}, 500
+    

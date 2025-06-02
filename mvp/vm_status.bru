@@ -1,0 +1,15 @@
+meta {
+  name: vm_status
+  type: http
+  seq: 7
+}
+
+get {
+  url: https://10.32.1.100:8006/api2/json/nodes/pve/qemu/100/status/current
+  body: none
+  auth: none
+}
+
+headers {
+  Authorization: PVEAPIToken=root@pam!LSAlab=c9bc7679-c908-48f1-957c-17addd105dae
+}

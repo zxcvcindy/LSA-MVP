@@ -294,24 +294,30 @@ def stop_vm_safe(node: str, vmid: int) -> None:
 # ------------------------------------------------------------------
 #  公用：等待 PVE 背景任務完成
 # ------------------------------------------------------------------
-def _wait_task_ok(node: str, upid: str, timeout: int = 120, interval: int = 2) -> None:
-    """輪詢任務直到 OK；逾時或失敗 raise。"""
+def _wait_task_ok(node: str, upid: str, timeout: int = 120, interval: int = 2):
     deadline = time.time() + timeout
     while time.time() < deadline:
-        r = requests.get(
-            f"{BASE_URL}/nodes/{node}/tasks/{upid}/status",
-            headers=HEADERS,
-            verify=VERIFY_SSL,
-        )
-        r.raise_for_status()
-        data = r.json()["data"]
-        if data["status"] == "stopped":
-            if data["exitstatus"] == "OK":
+        try:
+            r = requests.get(
+                f"{BASE_URL}/nodes/{node}/tasks/{upid}/status",
+                headers=HEADERS,
+                verify=VERIFY_SSL,
+            )
+            r.raise_for_status()
+            data = r.json()["data"]
+            if data["status"] == "stopped":
+                if data["exitstatus"] == "OK":
+                    return
+                raise RuntimeError(f"Task failed: {data['exitstatus']}")
+        except requests.exceptions.HTTPError as e:
+            # 處理 Proxmox 的 race condition
+            if e.response.status_code == 400 and "Parameter verification failed" in e.response.text:
+                # 視為已經完成
                 return
-            raise RuntimeError(f"Task failed: {data['exitstatus']}")
+            else:
+                raise  # 其他錯誤照常拋出
         time.sleep(interval)
     raise TimeoutError(f"Task {upid} timeout after {timeout}s")
-
 
 def destroy_vm(node: str, vmid: int, verify_ssl: bool = VERIFY_SSL) -> str:
     """

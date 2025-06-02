@@ -4,88 +4,502 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>建立 VM</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>PVE Pixie - 建立 VM</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 30px;
-            background: #f8f8f8;
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        #createBox {
-            background: #fff;
-            padding: 24px 32px;
-            border-radius: 10px;
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 科技感背景動畫 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(0, 123, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 191, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(0, 123, 255, 0.05) 0%, transparent 50%);
+            animation: backgroundPulse 8s ease-in-out infinite alternate;
+            z-index: -1;
+        }
+
+        @keyframes backgroundPulse {
+            0% {
+                opacity: 0.3;
+            }
+
+            100% {
+                opacity: 0.7;
+            }
+        }
+
+        /* 網格背景 */
+        .grid-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(0, 123, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 123, 255, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: -1;
+            opacity: 0.4;
+        }
+
+        /* 主標題 */
+        .main-title {
+            color: #ffffff;
+            font-size: 3rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, #00bfff, #007bff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(0, 191, 255, 0.3);
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            0% {
+                filter: brightness(1);
+            }
+
+            100% {
+                filter: brightness(1.2);
+            }
+        }
+
+        /* 建立VM卡片 */
+        .card {
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 191, 255, 0.2);
+            padding: 2.5rem;
             max-width: 420px;
-            margin: auto;
-            box-shadow: 0 0 10px rgba(0, 0, 0, .08);
+            width: 100%;
+            border-radius: 20px;
+            box-shadow:
+                0 25px 50px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            animation: cardFloat 6s ease-in-out infinite;
+            margin-bottom: 2rem;
+        }
+
+        @keyframes cardFloat {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* 卡片發光邊框效果 */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 20px;
+            padding: 2px;
+            background: linear-gradient(45deg, #007bff, #00bfff, #007bff);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            opacity: 0.6;
+            animation: borderGlow 3s linear infinite;
+        }
+
+        @keyframes borderGlow {
+            0% {
+                opacity: 0.3;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
+
+            100% {
+                opacity: 0.3;
+            }
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        h2 {
+            color: #ffffff;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 1.75rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .vm-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #007bff, #00bfff);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px rgba(0, 123, 255, 0.5);
+        }
+
+        .vm-icon::before {
+            content: '⚡';
+            color: white;
+            font-size: 1.2rem;
+        }
+
+        /* 輸入框樣式 */
+        .input-group {
+            margin-bottom: 2rem;
+            position: relative;
         }
 
         label {
             display: block;
-            margin-top: 14px;
+            color: #94a3b8;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.025em;
         }
 
         input {
             width: 100%;
-            padding: 10px;
-            margin-top: 6px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            box-sizing: border-box;
+            padding: 1rem 1.25rem;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
         }
 
-        button {
+        input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow:
+                0 0 0 3px rgba(0, 123, 255, 0.1),
+                0 0 20px rgba(0, 123, 255, 0.2);
+            background: rgba(30, 41, 59, 0.95);
+            transform: translateY(-2px);
+        }
+
+        input::placeholder {
+            color: #64748b;
+        }
+
+        /* 按鈕樣式 */
+        .btn {
             width: 100%;
-            padding: 12px;
-            margin-top: 24px;
-            background: #4c74af;
-            color: #fff;
+            padding: 1rem 1.5rem;
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: #ffffff;
             border: none;
-            border-radius: 6px;
+            border-radius: 12px;
             cursor: pointer;
             font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.025em;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow:
+                0 10px 25px rgba(0, 123, 255, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
         }
 
-        button:disabled {
-            opacity: 0.6;
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+            transform: translateY(-2px);
+            box-shadow:
+                0 15px 35px rgba(0, 123, 255, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
             cursor: not-allowed;
+            transform: none;
         }
 
-        #statusBox {
+        /* 狀態框樣式 */
+        .status-box {
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(71, 85, 105, 0.3);
+            padding: 1.5rem 2rem;
             max-width: 420px;
-            margin: 20px auto;
-            padding: 15px;
-            border-left: 6px solid #4c74af;
-            border-radius: 8px;
-            background: #fff;
+            width: 100%;
+            border-radius: 16px;
+            box-shadow:
+                0 20px 40px rgba(0, 0, 0, 0.3),
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
             display: none;
             word-break: break-all;
+            color: #e2e8f0;
+            font-size: 0.875rem;
+            line-height: 1.6;
+            animation: statusSlideIn 0.5s ease-out;
         }
 
-        #statusBox.error {
-            border-left-color: #e74c3c;
-            color: #e74c3c;
+        @keyframes statusSlideIn {
+            0% {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        #statusBox.success {
-            border-left-color: #4CAF50;
+        .status-box::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(135deg, #007bff, #00bfff);
+        }
+
+        .status-box.error::before {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .status-box.success::before {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+
+        .status-box.error {
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+            background: rgba(15, 23, 42, 0.95);
+        }
+
+        .status-box.success {
+            border-color: rgba(16, 185, 129, 0.3);
+            color: #86efac;
+            background: rgba(15, 23, 42, 0.95);
+        }
+
+        /* 載入動畫 */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid transparent;
+            border-top: 2px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* 進度指示器 */
+        .progress-indicator {
+            display: none;
+            margin-top: 1rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 4px;
+            background: rgba(71, 85, 105, 0.3);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #007bff, #00bfff);
+            border-radius: 2px;
+            animation: progressPulse 2s ease-in-out infinite;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        @keyframes progressPulse {
+
+            0%,
+            100% {
+                opacity: 0.8;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 480px) {
+            .main-title {
+                font-size: 2rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .card {
+                padding: 2rem 1.5rem;
+                margin: 1rem;
+            }
+
+            body {
+                padding: 10px;
+            }
+        }
+
+        /* 返回按鈕 */
+        .back-btn {
+            position: fixed;
+            top: 2rem;
+            left: 2rem;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            border-radius: 12px;
+            color: #e2e8f0;
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            z-index: 10;
+        }
+
+        .back-btn:hover {
+            background: rgba(51, 65, 85, 0.9);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .back-btn::before {
+            content: '←';
+            font-size: 1rem;
         }
     </style>
 </head>
 
 <body>
-    <div id="createBox">
-        <h2 class="text-center mb-4">建立 VM</h2>
+    <!-- 背景網格 -->
+    <div class="grid-bg"></div>
 
-        <label for="passwordInput">登入密碼</label>
-        <input type="password" id="passwordInput" placeholder="未輸入則採預設 1234" />
+    <!-- 返回按鈕 -->
+    <a href="/management" class="back-btn">返回管理</a>
 
-        <button id="createBtn" onclick="createVM()">建立</button>
+    <h1 class="main-title">PVE Pixie</h1>
+
+    <div class="card">
+        <div class="card-content">
+            <h2>
+                <div class="vm-icon"></div>
+                建立 VM
+            </h2>
+
+            <div class="input-group">
+                <label for="passwordInput">登入密碼</label>
+                <input type="password" id="passwordInput" placeholder="未輸入則採預設 1234" />
+            </div>
+
+            <button id="createBtn" class="btn" onclick="createVM()">
+                建立虛擬機
+            </button>
+
+            <div class="progress-indicator" id="progressIndicator">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <div id="statusBox"></div>
+    <div id="statusBox" class="status-box"></div>
 
     <script>
         const API_BASE = 'http://157.230.41.208:5002';
@@ -100,17 +514,53 @@
         function setStatus(msg, type) {
             const box = document.getElementById('statusBox');
             box.textContent = msg;
-            box.className = type ? type : '';
+            box.className = `status-box ${type || ''}`;
             box.style.display = 'block';
+
+            // 添加動畫效果
+            box.style.animation = 'none';
+            box.offsetHeight; // 觸發重排
+            box.style.animation = 'statusSlideIn 0.5s ease-out';
+        }
+
+        function showProgress() {
+            const indicator = document.getElementById('progressIndicator');
+            const fill = document.getElementById('progressFill');
+            indicator.style.display = 'block';
+
+            // 模擬進度
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 90) progress = 90;
+                fill.style.width = progress + '%';
+            }, 200);
+
+            return interval;
+        }
+
+        function hideProgress() {
+            const indicator = document.getElementById('progressIndicator');
+            const fill = document.getElementById('progressFill');
+            indicator.style.display = 'none';
+            fill.style.width = '0%';
         }
 
         async function createVM() {
             const btn = document.getElementById('createBtn');
             const password = document.getElementById('passwordInput').value || '1234';
 
-
             btn.disabled = true;
-            setStatus('建立中… 請稍候', '');
+            btn.classList.add('loading');
+            btn.textContent = '建立中...';
+
+            // 隱藏之前的狀態
+            document.getElementById('statusBox').style.display = 'none';
+
+            // 顯示進度條
+            const progressInterval = showProgress();
+
+            setStatus('正在初始化虛擬機... 請稍候', '');
 
             try {
                 const res = await fetch(`${API_BASE}/user-vm/create`, {
@@ -126,18 +576,53 @@
                 const data = await res.json().catch(() => ({}));
 
                 if (res.ok) {
-                    setStatus(`建立成功！VM ID:IP: ${data.ip || '（稍後取得）'}`, 'success');
-                    setTimeout(() => location.href = '/management', 1500);
+                    // 完成進度條
+                    clearInterval(progressInterval);
+                    document.getElementById('progressFill').style.width = '100%';
+
+                    setTimeout(() => {
+                        hideProgress();
+                        setStatus(`🎉 建立成功！VM IP: ${data.ip || '（稍後取得）'}`, 'success');
+                        btn.textContent = '建立成功！';
+                        btn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+
+                        setTimeout(() => {
+                            location.href = '/management';
+                        }, 2000);
+                    }, 500);
                 } else {
                     throw new Error(data.msg || res.statusText);
                 }
             } catch (err) {
                 console.error(err);
-                setStatus(`建立失敗：${err.message}`, 'error');
+                clearInterval(progressInterval);
+                hideProgress();
+                setStatus(`❌ 建立失敗：${err.message}`, 'error');
             } finally {
+                btn.classList.remove('loading');
                 btn.disabled = false;
+                if (btn.textContent === '建立中...') {
+                    btn.textContent = '建立虛擬機';
+                }
             }
         }
+
+        // Enter 鍵建立
+        document.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                createVM();
+            }
+        });
+
+        // 輸入框焦點效果
+        const input = document.getElementById('passwordInput');
+        input.addEventListener('focus', function () {
+            this.parentElement.style.transform = 'translateY(-2px)';
+        });
+
+        input.addEventListener('blur', function () {
+            this.parentElement.style.transform = 'translateY(0)';
+        });
     </script>
 </body>
 

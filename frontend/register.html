@@ -4,125 +4,626 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>使用者註冊</title>
+    <title>PVE Pixie - 使用者註冊</title>
     <style>
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            background: #f8f8f8;
-            padding: 30px
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        form {
-            background: #fff;
-            padding: 24px 32px;
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 科技感背景動畫 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(0, 123, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(0, 191, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(0, 123, 255, 0.05) 0%, transparent 50%);
+            animation: backgroundPulse 8s ease-in-out infinite alternate;
+            z-index: -1;
+        }
+
+        @keyframes backgroundPulse {
+            0% {
+                opacity: 0.3;
+            }
+
+            100% {
+                opacity: 0.7;
+            }
+        }
+
+        /* 主標題 */
+        .main-title {
+            color: #ffffff;
+            font-size: 3rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, #00bfff, #007bff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(0, 191, 255, 0.3);
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            0% {
+                filter: brightness(1);
+            }
+
+            100% {
+                filter: brightness(1.2);
+            }
+        }
+
+        /* 註冊卡片 */
+        .card {
+            background: rgba(15, 23, 42, 0.9);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 191, 255, 0.2);
+            padding: 2.5rem;
             max-width: 420px;
-            margin: auto;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, .08)
+            width: 100%;
+            border-radius: 20px;
+            box-shadow:
+                0 25px 50px rgba(0, 0, 0, 0.5),
+                0 0 0 1px rgba(255, 255, 255, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            position: relative;
+            overflow: hidden;
+            animation: cardFloat 6s ease-in-out infinite;
+        }
+
+        @keyframes cardFloat {
+
+            0%,
+            100% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        /* 卡片發光邊框效果 */
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 20px;
+            padding: 2px;
+            background: linear-gradient(45deg, #007bff, #00bfff, #007bff);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
+            opacity: 0.6;
+            animation: borderGlow 3s linear infinite;
+        }
+
+        @keyframes borderGlow {
+            0% {
+                opacity: 0.3;
+            }
+
+            50% {
+                opacity: 0.8;
+            }
+
+            100% {
+                opacity: 0.3;
+            }
+        }
+
+        .card-content {
+            position: relative;
+            z-index: 1;
         }
 
         h2 {
+            color: #ffffff;
             text-align: center;
-            margin-bottom: 20px
+            margin-bottom: 2rem;
+            font-size: 1.75rem;
+            font-weight: 600;
+            letter-spacing: -0.025em;
+        }
+
+        /* 輸入框樣式 */
+        .input-group {
+            margin-bottom: 1.5rem;
+            position: relative;
         }
 
         label {
             display: block;
-            margin-top: 14px
+            color: #94a3b8;
+            font-size: 0.875rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.025em;
         }
 
         input {
             width: 100%;
-            padding: 10px;
-            margin-top: 6px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            box-sizing: border-box
+            padding: 1rem 1.25rem;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
         }
 
-        button {
+        input:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow:
+                0 0 0 3px rgba(0, 123, 255, 0.1),
+                0 0 20px rgba(0, 123, 255, 0.2);
+            background: rgba(30, 41, 59, 0.95);
+            transform: translateY(-2px);
+        }
+
+        input::placeholder {
+            color: #64748b;
+        }
+
+        /* 密碼強度指示器 */
+        .password-strength {
+            margin-top: 0.5rem;
+            height: 4px;
+            background: rgba(71, 85, 105, 0.3);
+            border-radius: 2px;
+            overflow: hidden;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .password-strength.show {
+            opacity: 1;
+        }
+
+        .strength-bar {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #ef4444, #f59e0b, #10b981);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .strength-text {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            margin-top: 0.25rem;
+        }
+
+        /* 密碼匹配指示器 */
+        .password-match {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            font-size: 0.75rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .password-match.show {
+            opacity: 1;
+        }
+
+        .match-icon {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            color: white;
+        }
+
+        .match-icon.success {
+            background: #10b981;
+        }
+
+        .match-icon.error {
+            background: #ef4444;
+        }
+
+        /* 按鈕樣式 */
+        .btn {
             width: 100%;
-            padding: 12px;
-            margin-top: 24px;
-            background: #4caf50;
-            color: #fff;
+            padding: 1rem 1.5rem;
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: #ffffff;
             border: none;
-            border-radius: 6px;
+            border-radius: 12px;
             cursor: pointer;
-            font-size: 1rem
+            font-size: 1rem;
+            font-weight: 600;
+            letter-spacing: 0.025em;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow:
+                0 10px 25px rgba(0, 123, 255, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            margin-bottom: 1rem;
         }
 
-        button:hover {
-            background: #45a049
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
         }
 
+        .btn:hover::before {
+            left: 100%;
+        }
+
+        .btn:hover {
+            background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+            transform: translateY(-2px);
+            box-shadow:
+                0 15px 35px rgba(0, 123, 255, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, rgba(71, 85, 105, 0.8) 0%, rgba(51, 65, 85, 0.8) 100%);
+            box-shadow:
+                0 10px 25px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, rgba(51, 65, 85, 0.9) 0%, rgba(30, 41, 59, 0.9) 100%);
+            box-shadow:
+                0 15px 35px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        /* 錯誤訊息 */
         .error {
-            color: #e74c3c;
-            margin-top: 8px;
-            font-size: .9rem;
-            display: none
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            margin: 1rem 0;
+            display: none;
+            animation: errorShake 0.5s ease-in-out;
+        }
+
+        @keyframes errorShake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-5px);
+            }
+
+            75% {
+                transform: translateX(5px);
+            }
+        }
+
+        /* 成功訊息 */
+        .success {
+            color: #10b981;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            margin: 1rem 0;
+            display: none;
+        }
+
+        /* 響應式設計 */
+        @media (max-width: 480px) {
+            .main-title {
+                font-size: 2rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .card {
+                padding: 2rem 1.5rem;
+                margin: 1rem;
+            }
+
+            body {
+                padding: 10px;
+            }
+        }
+
+        /* 載入動畫 */
+        .loading {
+            opacity: 0.7;
+            pointer-events: none;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 2px solid transparent;
+            border-top: 2px solid #007bff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
     </style>
 </head>
 
 <body>
-    <h2>使用者註冊</h2>
+    <h1 class="main-title">PVE Pixie</h1>
 
-    <label for="userid">使用者 ID：</label>
-    <input id="userid" name="username" required>
+    <div class="card">
+        <div class="card-content">
+            <h2>使用者註冊</h2>
 
-    <!-- <label for="name">使用者名稱：</label>
-    <input id="name" name="name" required>
+            <div class="input-group">
+                <label for="userid">使用者 ID</label>
+                <input id="userid" name="username" placeholder="請輸入您的使用者 ID" required>
+            </div>
 
-    <label for="email">電子郵件：</label>
-    <input id="email" type="email" name="email" required> -->
+            <div class="input-group">
+                <label for="password">密碼</label>
+                <input id="password" type="password" name="password" placeholder="請輸入密碼（至少6位）" minlength="6" required>
+                <div class="password-strength" id="passwordStrength">
+                    <div class="strength-bar" id="strengthBar"></div>
+                </div>
+                <div class="strength-text" id="strengthText"></div>
+            </div>
 
-    <label for="password">密碼：</label>
-    <input id="password" type="password" name="password" minlength="6" required>
+            <div class="input-group">
+                <label for="confirm">確認密碼</label>
+                <input id="confirm" type="password" name="confirm" placeholder="請再次輸入密碼" minlength="6" required>
+                <div class="password-match" id="passwordMatch">
+                    <div class="match-icon" id="matchIcon"></div>
+                    <span id="matchText"></span>
+                </div>
+            </div>
 
-    <label for="confirm">確認密碼：</label>
-    <input id="confirm" type="password" name="confirm" minlength="6" required>
+            <div id="pwdErr" class="error">兩次密碼不一致！</div>
+            <div id="successMsg" class="success">註冊成功！正在跳轉到登入頁面...</div>
 
-    <div id="pwdErr" class="error">兩次密碼不一致！</div>
+            <button id="registerBtn" class="btn" onclick="register()" type="button">
+                註冊
+            </button>
 
-    <button onclick="register()" type="button">註冊</button>
-    <a href="/login">
-        <button>前往登入</button>
-    </a>
+            <a href="/login" style="text-decoration: none;">
+                <button class="btn btn-secondary" type="button">前往登入</button>
+            </a>
+        </div>
+    </div>
 
     <script>
         const userid = document.getElementById('userid');
-        // const nameEl = document.getElementById('name');
-        // const emailEl = document.getElementById('email');
         const pwd = document.getElementById('password');
         const confirm = document.getElementById('confirm');
         const pwdErr = document.getElementById('pwdErr');
+        const successMsg = document.getElementById('successMsg');
+        const registerBtn = document.getElementById('registerBtn');
+        const passwordStrength = document.getElementById('passwordStrength');
+        const strengthBar = document.getElementById('strengthBar');
+        const strengthText = document.getElementById('strengthText');
+        const passwordMatch = document.getElementById('passwordMatch');
+        const matchIcon = document.getElementById('matchIcon');
+        const matchText = document.getElementById('matchText');
 
         const API_BASE = 'http://157.230.41.208:5002';
 
-        async function register() {
-            const res = await fetch(`${API_BASE}/register`, {
-                mode: "cors",
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    username: userid.value,
-                    // name: nameEl.value,
-                    // email: emailEl.value,
-                    password: pwd.value
-                })
-            });
+        // 密碼強度檢測
+        function checkPasswordStrength(password) {
+            let strength = 0;
+            let text = '';
 
-            console.log(res);
+            if (password.length >= 6) strength += 1;
+            if (password.length >= 8) strength += 1;
+            if (/[a-z]/.test(password)) strength += 1;
+            if (/[A-Z]/.test(password)) strength += 1;
+            if (/[0-9]/.test(password)) strength += 1;
+            if (/[^A-Za-z0-9]/.test(password)) strength += 1;
 
-            if (res.ok) {
-                alert('註冊成功！');
-                location.href = '/login';
+            const percentage = (strength / 6) * 100;
+
+            if (strength <= 2) {
+                text = '弱';
+            } else if (strength <= 4) {
+                text = '中等';
             } else {
-                const data = await res.json().catch(() => ({}));
-                alert('註冊失敗：' + (data.msg || res.statusText));
+                text = '強';
+            }
+
+            return { strength, percentage, text };
+        }
+
+        // 密碼輸入事件
+        pwd.addEventListener('input', function () {
+            const password = this.value;
+
+            if (password.length > 0) {
+                passwordStrength.classList.add('show');
+                const result = checkPasswordStrength(password);
+                strengthBar.style.width = result.percentage + '%';
+                strengthText.textContent = `密碼強度: ${result.text}`;
+            } else {
+                passwordStrength.classList.remove('show');
+            }
+
+            checkPasswordMatch();
+        });
+
+        // 確認密碼輸入事件
+        confirm.addEventListener('input', checkPasswordMatch);
+
+        function checkPasswordMatch() {
+            const password = pwd.value;
+            const confirmPassword = confirm.value;
+
+            if (confirmPassword.length > 0) {
+                passwordMatch.classList.add('show');
+
+                if (password === confirmPassword) {
+                    matchIcon.className = 'match-icon success';
+                    matchIcon.textContent = '✓';
+                    matchText.textContent = '密碼匹配';
+                    matchText.style.color = '#10b981';
+                    pwdErr.style.display = 'none';
+                } else {
+                    matchIcon.className = 'match-icon error';
+                    matchIcon.textContent = '✗';
+                    matchText.textContent = '密碼不匹配';
+                    matchText.style.color = '#ef4444';
+                }
+            } else {
+                passwordMatch.classList.remove('show');
             }
         }
+
+        async function register() {
+            // 清除訊息
+            pwdErr.style.display = 'none';
+            successMsg.style.display = 'none';
+
+            // 驗證密碼匹配
+            if (pwd.value !== confirm.value) {
+                pwdErr.textContent = '兩次密碼不一致！';
+                pwdErr.style.display = 'block';
+                return;
+            }
+
+            // 驗證密碼強度
+            if (pwd.value.length < 6) {
+                pwdErr.textContent = '密碼長度至少需要6位！';
+                pwdErr.style.display = 'block';
+                return;
+            }
+
+            // 添加載入狀態
+            registerBtn.classList.add('loading');
+            registerBtn.textContent = '註冊中...';
+            registerBtn.disabled = true;
+
+            try {
+                const res = await fetch(`${API_BASE}/register`, {
+                    mode: "cors",
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        username: userid.value.trim(),
+                        password: pwd.value
+                    })
+                });
+
+                console.log(res);
+
+                if (res.ok) {
+                    // 成功動畫
+                    registerBtn.textContent = '註冊成功！';
+                    registerBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                    successMsg.style.display = 'block';
+
+                    setTimeout(() => {
+                        location.href = '/login';
+                    }, 2000);
+                } else {
+                    const data = await res.json().catch(() => ({}));
+                    pwdErr.textContent = '註冊失敗：' + (data.msg || res.statusText);
+                    pwdErr.style.display = 'block';
+                }
+            } catch (error) {
+                pwdErr.textContent = '網路連線錯誤，請稍後再試';
+                pwdErr.style.display = 'block';
+            } finally {
+                // 移除載入狀態
+                registerBtn.classList.remove('loading');
+                registerBtn.disabled = false;
+                if (registerBtn.textContent === '註冊中...') {
+                    registerBtn.textContent = '註冊';
+                }
+            }
+        }
+
+        // Enter 鍵註冊
+        document.addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                register();
+            }
+        });
+
+        // 輸入框焦點效果
+        const inputs = document.querySelectorAll('input');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function () {
+                this.parentElement.style.transform = 'translateY(-2px)';
+            });
+
+            input.addEventListener('blur', function () {
+                this.parentElement.style.transform = 'translateY(0)';
+            });
+        });
     </script>
 
 </body>

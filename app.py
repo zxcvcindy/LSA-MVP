@@ -51,9 +51,9 @@ def teardown_db(exception):
 # ---------------------------------------------------------------------------
 
 
-@app.route("/login", methods=["GET"])
+@app.route("/home", methods=["GET"])
 def login_page():
-    return render_template("login.html")
+    return render_template("home.html")
 
 
 @app.route("/register", methods=["POST"])

@@ -4,6 +4,7 @@ import os
 from flask import Flask, request, jsonify, flash, render_template, redirect
 import proxmox_api
 from dbUtils import *
+from dbUtils import delete_vm as db_delete_vm
 from flask_jwt_extended import (
     JWTManager,
     create_access_token,
@@ -202,29 +203,23 @@ def get_vm_ssh6(node, vmid):
 @app.route("/vm/<node>/<int:vmid>/delete", methods=["POST", "OPTIONS"])
 @jwt_required()
 def delete_vm(node, vmid):
-    """POST /vm/pve/<vmid>/delete
-    使用 proxmox_api.delete_vm 封裝：
-        • 停機 → 刪除 → 等待任務完成
-        • 成功回 {ok: True}
-        • 失敗回 {ok: False, error: ...}
-    本函式只負責 DB 與回應狀態碼。
-    """
     if request.method == "OPTIONS":
         return "", 204
 
     user_id = get_jwt_identity()
     db, _ = get_db()
 
-    result = proxmox_api.delete_vm(node, vmid)  # 已做完整流程
+    result = proxmox_api.delete_vm(node, vmid)
 
     if result.get("ok"):
-        delete_vm(user_id, vmid)
+        db_delete_vm(user_id, vmid)  # <-- 這裡改掉
         db.commit()
         return jsonify({"ok": True}), 200
 
     db.rollback()
-    current_app.logger.error("DELETE VM %s failed: %s", id, result.get("error"))
+    current_app.logger.error("DELETE VM %s failed: %s", vmid, result.get("error"))
     return jsonify({"ok": False, "error": result.get("error", "Unknown")}), 500
+
 
 
 @app.route("/vm/<node>/<int:vmid>/restart", methods=["POST"])

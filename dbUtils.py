@@ -162,7 +162,8 @@ def delete_vm(user_id: int, vmid: int):
 
     # Step 3: 刪除本地 DB 紀錄
     try:
-        cursor.execute("DELETE FROM vms WHERE vmid = %s AND user_id = %s", (vmid, user_id))
+        #cursor.execute("DELETE FROM vms WHERE vmid = %s AND user_id = %s", (vmid, user_id))
+        cursor.execute("DELETE FROM vms WHERE id = %s AND user_id = %s", (vmid, user_id))
         db.commit()
         return {"ok": True}, 200
     except Exception as e:

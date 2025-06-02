@@ -79,8 +79,7 @@
     <h2>我的資源管理</h2>
 
     <div style="width:60%;min-width:320px;margin:auto;text-align:right">
-        <button class="create" onclick="window.location='/create'">＋ 建立 VM</button>
-        <button class="create-container" onclick="window.location='/create-container'">＋ 建立 Container</button>
+        <button class="create" onclick="window.location='/create'">＋ 建立新資源</button>
         <button class="logout" onclick="logout()"> 登出</button>
 
     </div>
@@ -88,7 +87,7 @@
     <table id="resourceTable">
         <thead>
             <tr>
-                <th>VM / Container 名稱</th>
+                <th>VM 名稱</th>
                 <th>狀態</th>
                 <th>SSH 指令</th>
                 <th>操作</th>
@@ -120,7 +119,6 @@
                 console.error(err);
             }
         }
-
         function renderResources(data) {
             if (!Array.isArray(data) || data.length === 0) {
                 tbody.innerHTML = `
@@ -181,7 +179,7 @@
         //             method: "POST",
         //             headers: {
         //                 'Content-Type': 'application/json',
-        //                 'Authorization': Bearer ${token}
+        //                 'Authorization': `Bearer ${token}`
         //             }
         //         });
         //         if (!res.ok) throw new Error(res.statusText);
@@ -244,7 +242,7 @@
         //             method: "DELETE",
         //             headers: {
         //                 'Content-Type': 'application/json',
-        //                 'Authorization': Bearer ${token}
+        //                 'Authorization': `Bearer ${token}`
         //             }
         //         });
         //         if (!res.ok) throw new Error(res.statusText);

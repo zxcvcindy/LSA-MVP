@@ -79,7 +79,8 @@
     <h2>我的資源管理</h2>
 
     <div style="width:60%;min-width:320px;margin:auto;text-align:right">
-        <button class="create" onclick="window.location='/create'">＋ 建立新資源</button>
+        <button class="create" onclick="window.location='/create'">＋ 建立 VM</button>
+        <button class="create-container" onclick="window.location='/create-container'">＋ 建立 Container</button>
         <button class="logout" onclick="logout()"> 登出</button>
 
     </div>
@@ -87,7 +88,7 @@
     <table id="resourceTable">
         <thead>
             <tr>
-                <th>VM 名稱</th>
+                <th>VM / Container 名稱</th>
                 <th>狀態</th>
                 <th>SSH 指令</th>
                 <th>操作</th>
@@ -121,7 +122,6 @@
         }
 
         function renderResources(data) {
-            // 如果不是陣列或是空陣列，就顯示「目前沒有任何資源」
             if (!Array.isArray(data) || data.length === 0) {
                 tbody.innerHTML = `
             <tr>
@@ -133,12 +133,9 @@
                 return;
             }
 
-            // 清空表格內容
             tbody.innerHTML = '';
 
-            // 遍歷每個 VM 資料，渲染表格
             for (const vm of data) {
-                // ✅ 跳過「沒有 vmid 或狀態」的空資料
                 if (!vm || !vm.vmid || !vm.status) continue;
 
                 const vmName = vm.name || '未命名';
@@ -151,6 +148,11 @@
                     ? 'status-running'
                     : (status === 'stopped' ? 'status-stopped' : '');
 
+                // 刪除按鈕：只有當 status === stopped 才出現
+                const deleteButton = (status === 'stopped')
+                    ? <button onclick="deleteVM(${vmid})">刪除</button>
+                    : '';
+
                 const row = document.createElement('tr');
                 row.innerHTML = `
             <td>${vmName}</td>
@@ -160,14 +162,12 @@
                 <button onclick="start(${vmid})">啟動</button>
                 <button onclick="stop(${vmid})">停止</button>
                 <button onclick="restart(${vmid})">重啟</button>
-                <button onclick="deleteVM(${vmid})">刪除</button>
+                ${deleteButton}
             </td>
         `;
                 tbody.appendChild(row);
             }
         }
-
-
 
         loadResources();
 
@@ -181,7 +181,7 @@
         //             method: "POST",
         //             headers: {
         //                 'Content-Type': 'application/json',
-        //                 'Authorization': `Bearer ${token}`
+        //                 'Authorization': Bearer ${token}
         //             }
         //         });
         //         if (!res.ok) throw new Error(res.statusText);
@@ -244,7 +244,7 @@
         //             method: "DELETE",
         //             headers: {
         //                 'Content-Type': 'application/json',
-        //                 'Authorization': `Bearer ${token}`
+        //                 'Authorization': Bearer ${token}
         //             }
         //         });
         //         if (!res.ok) throw new Error(res.statusText);

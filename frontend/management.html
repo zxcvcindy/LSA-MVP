@@ -119,7 +119,9 @@
                 console.error(err);
             }
         }
+
         function renderResources(data) {
+            // 如果不是陣列或是空陣列，就顯示「目前沒有任何資源」
             if (!Array.isArray(data) || data.length === 0) {
                 tbody.innerHTML = `
             <tr>
@@ -131,9 +133,12 @@
                 return;
             }
 
+            // 清空表格內容
             tbody.innerHTML = '';
 
+            // 遍歷每個 VM 資料，渲染表格
             for (const vm of data) {
+                // ✅ 跳過「沒有 vmid 或狀態」的空資料
                 if (!vm || !vm.vmid || !vm.status) continue;
 
                 const vmName = vm.name || '未命名';
@@ -146,11 +151,6 @@
                     ? 'status-running'
                     : (status === 'stopped' ? 'status-stopped' : '');
 
-                // 刪除按鈕：只有當 status === stopped 才出現
-                const deleteButton = (status === 'stopped')
-                    ? <button onclick="deleteVM(${vmid})">刪除</button>
-                    : '';
-
                 const row = document.createElement('tr');
                 row.innerHTML = `
             <td>${vmName}</td>
@@ -160,12 +160,14 @@
                 <button onclick="start(${vmid})">啟動</button>
                 <button onclick="stop(${vmid})">停止</button>
                 <button onclick="restart(${vmid})">重啟</button>
-                ${deleteButton}
+                <button onclick="deleteVM(${vmid})">刪除</button>
             </td>
         `;
                 tbody.appendChild(row);
             }
         }
+
+
 
         loadResources();
 
